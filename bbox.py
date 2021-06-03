@@ -47,20 +47,20 @@ class BBox(object):
                             dim=-1)
 
     '''
-    https://towardsdatascience.com/review-ssd-single-shot-detector-object-detection-851a94607d11
-    same as bbox2loc of simple-faster-rcnn
-    localization loss using
+    https://lilianweng.github.io/lil-log/2017/12/31/object-recognition-for-dummies-part-3.html
+    https://blog.csdn.net/qq_34106574/article/details/81669891
+    proposal to ground truth shift and scale
+    tx = (gx−px)/pw
+    ty = (gy−py)/ph
+    tw = ln(gw/pw)
+    th = ln(gh/ph)
     '''
     @staticmethod
     #def calc_transformer(gen_bboxes: Tensor, gt_bboxes: Tensor) -> Tensor:
     def offset_from_gt_center(gen_bboxes: Tensor, gt_bboxes: Tensor) -> Tensor:
         gen_bboxes_centerbase   = BBox.center_wh_transform(gen_bboxes)
         gt_bboxes_centerbase    = BBox.center_wh_transform(gt_bboxes)
-        # log is ln
-        ''' (x1-x0)/w0, 
-            (y1-y0)/h0, 
-            ln(w1/w0), 
-            ln(h1/h0) '''
+        # torch.log is ln
         gt_offset = torch.stack([(gt_bboxes_centerbase[..., 0] - gen_bboxes_centerbase[..., 0]) / gen_bboxes_centerbase[..., 2],
                                  (gt_bboxes_centerbase[..., 1] - gen_bboxes_centerbase[..., 1]) / gen_bboxes_centerbase[..., 3],
                                  torch.log(gt_bboxes_centerbase[..., 2] / gen_bboxes_centerbase[..., 2]),
@@ -69,19 +69,19 @@ class BBox(object):
         return gt_offset
 
     '''
-    https://blog.csdn.net/dongapple/article/details/75468810
-    same as loc2bbox of simple-faster-rcnn
-    bounding box regression
+    https://lilianweng.github.io/lil-log/2017/12/31/object-recognition-for-dummies-part-3.html
+    https://blog.csdn.net/qq_34106574/article/details/81669891
+    proposal to predict shift and scale
+    ĝx = x_predict * pw + px
+    ĝy = y_predict * ph + py
+    ĝw = exp^(w_predict) * pw
+    ĝh = exp^(h_predict) * ph
     '''
     @staticmethod
     #def apply_transformer(src_bboxes: Tensor, transformers: Tensor) -> Tensor:
     def offset_form_pred_ltrb(gen_bboxes: Tensor, pred_bboxes: Tensor) -> Tensor:
         gen_bboxes_centerbase = BBox.center_wh_transform(gen_bboxes)
-        # exp is e^n,
-        ''' x1*w0 + x0, 
-            y1*h0 + y0, 
-            e^(w1*w0),
-            e^(h1*h0) '''
+        # torch.exp is e^n,
         pred_offset = torch.stack( [pred_bboxes[..., 0] * gen_bboxes_centerbase[..., 2] + gen_bboxes_centerbase[..., 0],
                                     pred_bboxes[..., 1] * gen_bboxes_centerbase[..., 3] + gen_bboxes_centerbase[..., 1],
                                     torch.exp(pred_bboxes[..., 2]) * gen_bboxes_centerbase[..., 2],
