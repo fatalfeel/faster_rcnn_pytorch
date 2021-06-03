@@ -20,7 +20,7 @@ class TrainConfig(Config):
 
     NUM_STEPS_TO_DISPLAY: int   = 20
     NUM_STEPS_TO_SNAPSHOT: int  = 1000
-    NUM_STEPS_TO_FINISH: int    = 100000
+    NUM_STEPS_TO_FINISH: int    = 200000
 
     @classmethod
     def setup(cls,
