@@ -71,7 +71,7 @@ class BBox(object):
     '''
     https://blog.csdn.net/dongapple/article/details/75468810
     same as loc2bbox of simple-faster-rcnn
-    confidence using
+    bounding box regression
     '''
     @staticmethod
     #def apply_transformer(src_bboxes: Tensor, transformers: Tensor) -> Tensor:
