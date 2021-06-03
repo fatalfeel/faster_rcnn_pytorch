@@ -4,8 +4,8 @@
 - Comment in many functions
 
 ## prepare install
-cd faster_rcnn_pytorch
-./install_data.sh
+- cd faster_rcnn_pytorch
+- ./install_data.sh
 
 ## run
 - python3 ./train.py --cuda True
