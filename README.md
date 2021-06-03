@@ -1,13 +1,13 @@
-# faster_rcnn_pytorch
+# Faster-Rcnn in Pytorch
 - An implementation of [Faster R-CNN](https://arxiv.org/pdf/1506.01497.pdf) in PyTorch.
-- Only python source no need compile nms and roialign in cpp
+- Only python source. These is no need to compile nms and roialign cpp
 - Comment in many functions
 
-## prepare install
+## Prepare install
 - cd faster_rcnn_pytorch
 - ./install_data.sh
 
-## run
+## Run
 - python3 ./train.py --cuda True
 - python3 ./train.py --cuda True --resume True
 - python3 ./infer.py --cuda True
