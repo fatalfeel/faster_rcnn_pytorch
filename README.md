@@ -13,7 +13,8 @@
 - python3 ./infer.py --cuda True
 
 ## Performance
-- GeForce GTX 1650
+- GeForce GTX 1650 4GB
+- CUDA Version 10.2
 - Train 3 frames per second
 - Infer 8 frames per second
 
