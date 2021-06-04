@@ -140,19 +140,19 @@ class Detection(nn.Module):
 
     def getLoss(self,
                 proposal_classes:   Tensor,
-                proposal_boxpred:   Tensor,
+                proposal_boxdelta:  Tensor,
                 gt_proposal_classes:Tensor,
                 gt_proposal_offset: Tensor,
                 batch_size,
                 batch_indices) -> Tuple[Tensor, Tensor]:
 
-        proposal_boxpred            = proposal_boxpred.view(-1, self.num_classes, 4)[torch.arange(end=len(proposal_boxpred), dtype=torch.long), gt_proposal_classes]
+        proposal_boxdelta           = proposal_boxdelta.view(-1, self.num_classes, 4)[torch.arange(end=len(proposal_boxdelta), dtype=torch.long), gt_proposal_classes]
         detectbox_normalize_mean    = self._detectbox_normalize_mean.to(device=gt_proposal_offset.device)
         detectbox_normalize_std     = self._detectbox_normalize_std.to(device=gt_proposal_offset.device)
         gt_proposal_offset          = (gt_proposal_offset - detectbox_normalize_mean) / detectbox_normalize_std  # scale up target to make regressor easier to learn
 
         cross_entropies     = torch.empty(batch_size, dtype=torch.float, device=proposal_classes.device)
-        smooth_l1_losses    = torch.empty(batch_size, dtype=torch.float, device=proposal_boxpred.device)
+        smooth_l1_losses    = torch.empty(batch_size, dtype=torch.float, device=proposal_boxdelta.device)
 
         for batch_index in range(batch_size):
             # selected_indices = (batch_indices == batch_index).nonzero().view(-1)
@@ -164,7 +164,19 @@ class Detection(nn.Module):
             # fg_indices = gt_proposal_classes[selected_indices].nonzero().view(-1)
             fg_indices = torch.nonzero(gt_proposal_classes[selected_indices]).view(-1)
 
-            smooth_l1_loss = self.beta_smooth_l1_loss(  pred    = proposal_boxpred[selected_indices][fg_indices],
+            '''
+            pred:
+            dx(p) = (ĝx-px)/pw
+            dy(p) = (ĝy-py)/ph
+            dw(p) = ln(ĝw/pw)
+            dh(p) = ln(ĝh/ph)
+            offset:
+            tx = (gx−px)/pw
+            ty = (gy−py)/ph
+            tw = ln(gw/pw)
+            th = ln(gh/ph)
+            '''
+            smooth_l1_loss = self.beta_smooth_l1_loss(  pred    = proposal_boxdelta[selected_indices][fg_indices],
                                                         offset  = gt_proposal_offset[selected_indices][fg_indices],
                                                         beta    = self._proposal_smooth_l1_loss_beta  )
 

@@ -122,14 +122,14 @@ class RegionProposalNetwork(nn.Module):
     '''https://lilianweng.github.io/lil-log/2017/12/31/object-recognition-for-dummies-part-3.html'''
     def getLoss(self,
                 anchor_score: Tensor,
-                anchor_boxpred: Tensor,
+                anchor_bboxdelta: Tensor,
                 gt_anchor_labels: Tensor,
                 gt_anchor_offset: Tensor,
                 batch_size: int,
                 batch_indices: Tensor) -> Tuple[Tensor, Tensor]:
 
         cross_entropies = torch.empty(batch_size,   dtype=torch.float, device=anchor_score.device)
-        smooth_l1_losses = torch.empty(batch_size,  dtype=torch.float, device=anchor_boxpred.device)
+        smooth_l1_losses = torch.empty(batch_size,  dtype=torch.float, device=anchor_bboxdelta.device)
 
         for batch_index in range(batch_size):
             #selected_indices = (batch_indices == batch_index).nonzero().view(-1)
@@ -141,7 +141,19 @@ class RegionProposalNetwork(nn.Module):
             #fg_indices = gt_anchor_labels[selected_indices].nonzero().view(-1)
             fg_indices = torch.nonzero(gt_anchor_labels[selected_indices]).view(-1)
 
-            smooth_l1_loss = self.beta_smooth_l1_loss(  pred    = anchor_boxpred[selected_indices][fg_indices],
+            '''
+            pred:
+            dx(p) = (ĝx-px)/pw
+            dy(p) = (ĝy-py)/ph
+            dw(p) = ln(ĝw/pw)
+            dh(p) = ln(ĝh/ph)
+            offset:
+            tx = (gx−px)/pw
+            ty = (gy−py)/ph
+            tw = ln(gw/pw)
+            th = ln(gh/ph)
+            '''
+            smooth_l1_loss = self.beta_smooth_l1_loss(  pred    = anchor_bboxdelta[selected_indices][fg_indices],
                                                         offset  = gt_anchor_offset[selected_indices][fg_indices],
                                                         beta    = self._anchor_smooth_l1_loss_beta  )
 
