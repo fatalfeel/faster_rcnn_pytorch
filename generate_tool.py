@@ -9,15 +9,20 @@ from bbox import BBox
 # refer to: simple-faster-rcnn/rpn/creator_tools.py
 class GenerateTool(object):
     def __init__(self,
+                 num_classes:       int,
                  anchor_ratios:     List[Tuple[int, int]],
                  anchor_sizes:      List[int],
                  pre_nms_top_n:     int,
                  post_nms_top_n:    int):
 
-        self._anchor_ratios     = anchor_ratios
-        self._anchor_sizes      = anchor_sizes
-        self._pre_nms_top_n     = pre_nms_top_n
-        self._post_nms_top_n    = post_nms_top_n
+        self.num_classes                = num_classes
+        self._anchor_ratios             = anchor_ratios
+        self._anchor_sizes              = anchor_sizes
+        self._pre_nms_top_n             = pre_nms_top_n
+        self._post_nms_top_n            = post_nms_top_n
+
+        self._detectbox_normalize_mean  = torch.tensor([0.0, 0.0, 0.0, 0.0], dtype=torch.float)
+        self._detectbox_normalize_std   = torch.tensor([0.1, 0.1, 0.2, 0.2], dtype=torch.float)
 
     def anchors(self, image_width: int, image_height: int, num_x_anchors: int, num_y_anchors: int) -> Tensor:
         '''array[num_y_anchors + 2][1:-1] = array[1] ~ array[num_y_anchors+2-2]'''
@@ -63,8 +68,8 @@ class GenerateTool(object):
                   anchor_gen_bboxes:    Tensor,
                   anchor_score:         Tensor,
                   anchor_pred_bboxes:   Tensor,
-                  image_width:  int,
-                  image_height: int) -> Tensor:
+                  image_width:          int,
+                  image_height:         int) -> Tensor:
         nms_proposal_bboxes_batch   = []
         padded_proposal_bboxes      = []
 
@@ -101,3 +106,47 @@ class GenerateTool(object):
         padded_proposal_bboxes = torch.stack(padded_proposal_bboxes, dim=0)
 
         return padded_proposal_bboxes
+
+    def detections(self,
+                   proposal_gen_bboxes:Tensor,
+                   proposal_classes:   Tensor,
+                   proposal_boxpred:   Tensor,
+                   image_width:        int,
+                   image_height:       int) -> Tuple[Tensor, Tensor, Tensor, Tensor]:
+        batch_size                  = proposal_gen_bboxes.shape[0]
+        proposal_boxpred            = proposal_boxpred.view(batch_size, -1, self.num_classes, 4)
+        detectbox_normalize_std     = self._detectbox_normalize_std.to(device=proposal_boxpred.device)
+        detectbox_normalize_mean    = self._detectbox_normalize_mean.to(device=proposal_boxpred.device)
+        proposal_boxpred            = proposal_boxpred * detectbox_normalize_std + detectbox_normalize_mean
+
+        proposal_gen_bboxes         = proposal_gen_bboxes.unsqueeze(dim=2).repeat(1, 1, self.num_classes, 1)
+        pred_offset                 = BBox.offset_form_pred_ltrb(proposal_gen_bboxes, proposal_boxpred)
+        detection_bboxes            = BBox.clip(pred_offset, left=0, top=0, right=image_width, bottom=image_height)
+        detection_probs             = tnf.softmax(proposal_classes, dim=-1)
+
+        all_detection_bboxes        = []
+        all_detection_classes       = []
+        all_detection_probs         = []
+        all_detection_batch_indices = []
+
+        for batch_index in range(batch_size):
+            for c in range(1, self.num_classes):
+                class_bboxes = detection_bboxes[batch_index, :, c, :]
+                class_probs = detection_probs[batch_index, :, c]
+                threshold = 0.3
+                # kept_indices = nms(class_bboxes, class_probs, threshold)
+                kept_indices    = ops.nms(class_bboxes, class_probs, threshold)
+                class_bboxes    = class_bboxes[kept_indices]
+                class_probs     = class_probs[kept_indices]
+
+                all_detection_bboxes.append(class_bboxes)
+                all_detection_classes.append(torch.full((len(kept_indices),), c, dtype=torch.int))
+                all_detection_probs.append(class_probs)
+                all_detection_batch_indices.append(torch.full((len(kept_indices),), batch_index, dtype=torch.long))
+
+        all_detection_bboxes        = torch.cat(all_detection_bboxes, dim=0)
+        all_detection_classes       = torch.cat(all_detection_classes, dim=0)
+        all_detection_probs         = torch.cat(all_detection_probs, dim=0)
+        all_detection_batch_indices = torch.cat(all_detection_batch_indices, dim=0)
+
+        return all_detection_bboxes, all_detection_classes, all_detection_probs, all_detection_batch_indices

@@ -7,10 +7,10 @@ from bbox import BBox
 
 class RegionProposalNetwork(nn.Module):
     def __init__(self,
-                 num_features_out: int,
-                 anchor_ratios: List[Tuple[int, int]],
-                 anchor_sizes: List[int],
-                 anchor_smooth_l1_loss_beta: float):
+                 num_features_out:          int,
+                 anchor_ratios:             List[Tuple[int, int]],
+                 anchor_sizes:              List[int],
+                 anchor_smooth_l1_loss_beta:float):
 
         super().__init__()
 
@@ -29,12 +29,12 @@ class RegionProposalNetwork(nn.Module):
         self._anchor_boxpred    = nn.Conv2d(in_channels=512, out_channels=num_anchors * 4, kernel_size=1, stride=1, padding=0)
 
     def forward(self,
-                resnet_features: Tensor,
-                anchor_gen_bboxes: Optional[Tensor] = None,
-                gt_bboxes_batch: Optional[Tensor] = None,
-                image_width: Optional[int]=None,
-                image_height: Optional[int]=None) -> Union[Tuple[Tensor, Tensor],
-                                                           Tuple[Tensor, Tensor, Tensor, Tensor]]:
+                resnet_features:    Tensor,
+                anchor_gen_bboxes:  Optional[Tensor] = None,
+                gt_bboxes_batch:    Optional[Tensor] = None,
+                image_width:        Optional[int]=None,
+                image_height:       Optional[int]=None) -> Union[Tuple[Tensor, Tensor],
+                                                                 Tuple[Tensor, Tensor, Tensor, Tensor]]:
 
         batch_size          = resnet_features.shape[0]
         rpn_features        = self._rpnconvseq(resnet_features) #features = self._rpnconvseq(resnet_output)
@@ -101,7 +101,8 @@ class RegionProposalNetwork(nn.Module):
             selected_indices    = fgbg_samples[selected_rand].unbind(dim=1)
 
             inside_anchor_gen_bboxes    = inside_anchor_gen_bboxes[selected_indices]
-            gt_bboxes                   = gt_bboxes_batch[selected_indices[0], anchor_assignments[selected_indices]] #expand
+            #gt_bboxes                   = gt_bboxes_batch[selected_indices[0], anchor_assignments[selected_indices]] #expand
+            gt_bboxes                   = gt_bboxes_batch[0, anchor_assignments[selected_indices]]  # expand faster
             gt_anchor_labels            = labels[selected_indices]
             gt_anchor_offset            = BBox.offset_from_gt_center(inside_anchor_gen_bboxes, gt_bboxes)
             batch_indices               = selected_indices[0]
@@ -156,4 +157,5 @@ class RegionProposalNetwork(nn.Module):
         # (flag * 0.5 * (diff ** 2)/beta + (1 - flag) * (diff - 0.5 * beta)
         loss = torch.where(diff < beta, 0.5 * (diff ** 2) / beta, diff - 0.5 * beta)
         loss = loss.sum() / (pred.numel() + 1e-8)
+
         return loss

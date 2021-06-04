@@ -12,15 +12,15 @@ from detection import Detection
 
 class Model(nn.Module):
     def __init__(self,
-                 backbone: BackboneBase,
-                 num_classes: int,
-                 #pooler_mode: Pooler.Mode,
-                 anchor_ratios: List[Tuple[int, int]],
-                 anchor_sizes: List[int],
-                 rpn_pre_nms_top_n: int,
-                 rpn_post_nms_top_n: int,
-                 anchor_smooth_l1_loss_beta: Optional[float] = None,
-                 proposal_smooth_l1_loss_beta: Optional[float] = None):
+                 backbone:                      BackboneBase,
+                 num_classes:                   int,
+                 #pooler_mode:                  Pooler.Mode,
+                 anchor_ratios:                 List[Tuple[int, int]],
+                 anchor_sizes:                  List[int],
+                 rpn_pre_nms_top_n:             int,
+                 rpn_post_nms_top_n:            int,
+                 anchor_smooth_l1_loss_beta:    Optional[float] = None,
+                 proposal_smooth_l1_loss_beta:  Optional[float] = None):
         super().__init__()
 
         self.resnet, hidden_layer, num_resnet_features_out, num_hidden_out = backbone.features()
@@ -38,7 +38,7 @@ class Model(nn.Module):
         #self.rpn        = RegionProposalNetwork(num_resnet_features_out, anchor_ratios, anchor_sizes, rpn_pre_nms_top_n, rpn_post_nms_top_n, anchor_smooth_l1_loss_beta)
         self.rpn        = RegionProposalNetwork(num_resnet_features_out, anchor_ratios, anchor_sizes, anchor_smooth_l1_loss_beta)
         self.detection  = Detection(hidden_layer, num_hidden_out, num_classes, proposal_smooth_l1_loss_beta)
-        self.gtool      = GenerateTool(anchor_ratios, anchor_sizes, rpn_pre_nms_top_n, rpn_post_nms_top_n)
+        self.gtool      = GenerateTool(num_classes, anchor_ratios, anchor_sizes, rpn_pre_nms_top_n, rpn_post_nms_top_n)
 
     def forward(self,
                 image_batch: Tensor,
@@ -113,11 +113,11 @@ class Model(nn.Module):
             detection_bboxes, \
             detection_classes, \
             detection_probs, \
-            detection_batch_indices = self.detection.generate_detections(proposal_gen_bboxes,
-                                                                         proposal_classes,
-                                                                         proposal_pred_bboxes,
-                                                                         image_width,
-                                                                         image_height)
+            detection_batch_indices = self.gtool.detections(proposal_gen_bboxes,
+                                                            proposal_classes,
+                                                            proposal_pred_bboxes,
+                                                            image_width,
+                                                            image_height)
 
             return detection_bboxes, \
                    detection_classes, \

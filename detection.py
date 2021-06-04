@@ -13,9 +13,9 @@ class RoiPooler(object):
         self.RoIAlign       = ops.RoIAlign(self.output_size, self.scale, 0, True)
 
     def apply(self,
-              resnet_features: Tensor,
-              proposal_gen_bboxes: Tensor,
-              batch_indices: Tensor) -> Tensor:
+              resnet_features:      Tensor,
+              proposal_gen_bboxes:  Tensor,
+              batch_indices:        Tensor) -> Tensor:
 
         #pool               = self.RoIAlign(resnet_features, torch.cat([batch_indices.view(-1, 1).float(), proposal_gen_bboxes], dim=1))
         proposal_indices    = batch_indices.view(-1, 1).float()
@@ -28,10 +28,10 @@ class RoiPooler(object):
 class Detection(nn.Module):
     # def __init__(self, pooler_mode: Pooler.Mode, hidden: nn.Module, num_hidden_out: int, num_classes: int, proposal_smooth_l1_loss_beta: float):
     def __init__(self,
-                 hidden_layer: nn.Module,
-                 num_hidden_out: int,
-                 num_classes: int,
-                 proposal_smooth_l1_loss_beta: float):
+                 hidden_layer:                  nn.Module,
+                 num_hidden_out:                int,
+                 num_classes:                   int,
+                 proposal_smooth_l1_loss_beta:  float):
         super().__init__()
         # self._pooler_mode = pooler_mode
         self.hidden_layer                   = hidden_layer
@@ -39,16 +39,17 @@ class Detection(nn.Module):
         self._proposal_class                = nn.Linear(num_hidden_out, num_classes)
         self._proposal_boxpred              = nn.Linear(num_hidden_out, num_classes * 4)
         self._proposal_smooth_l1_loss_beta  = proposal_smooth_l1_loss_beta
-        self._detectbox_normalize_mean      = torch.tensor([0.0, 0.0, 0.0, 0.0], dtype=torch.float)
-        self._detectbox_normalize_std       = torch.tensor([0.1, 0.1, 0.2, 0.2], dtype=torch.float)
         self.roipooler                      = RoiPooler()
 
+        self._detectbox_normalize_mean      = torch.tensor([0.0, 0.0, 0.0, 0.0], dtype=torch.float)
+        self._detectbox_normalize_std       = torch.tensor([0.1, 0.1, 0.2, 0.2], dtype=torch.float)
+
     def forward(self,
-                resnet_features: Tensor,
-                proposal_gen_bboxes: Tensor,
-                gt_bboxes_batch: Optional[Tensor] = None,
-                gt_labels_batch: Optional[Tensor] = None,) -> Union[Tuple[Tensor, Tensor],
-                                                                    Tuple[Tensor, Tensor, Tensor, Tensor]]:
+                resnet_features:    Tensor,
+                proposal_gen_bboxes:Tensor,
+                gt_bboxes_batch:    Optional[Tensor] = None,
+                gt_labels_batch:    Optional[Tensor] = None,) -> Union[Tuple[Tensor, Tensor],
+                                                                       Tuple[Tensor, Tensor, Tensor, Tensor]]:
         batch_size = resnet_features.shape[0]
 
         if self.training:
@@ -96,7 +97,8 @@ class Detection(nn.Module):
             selected_indices    = fgbg_samples[selected_rand].unbind(dim=1)
 
             proposal_gen_bboxes = proposal_gen_bboxes[selected_indices]
-            gt_bboxes           = gt_bboxes_batch[selected_indices[0], proposal_assignments[selected_indices]]
+            #gt_bboxes           = gt_bboxes_batch[selected_indices[0], proposal_assignments[selected_indices]]
+            gt_bboxes           = gt_bboxes_batch[0, proposal_assignments[selected_indices]]  # expand faster
             gt_proposal_classes = labels[selected_indices]
             gt_proposal_offset  = BBox.offset_from_gt_center(proposal_gen_bboxes, gt_bboxes)
             batch_indices       = selected_indices[0]
@@ -136,54 +138,10 @@ class Detection(nn.Module):
 
             return proposal_classes, proposal_boxpred
 
-    def generate_detections(self,
-                            proposal_gen_bboxes: Tensor,
-                            proposal_classes: Tensor,
-                            proposal_boxpred: Tensor,
-                            image_width: int,
-                            image_height: int) -> Tuple[Tensor, Tensor, Tensor, Tensor]:
-        batch_size                  = proposal_gen_bboxes.shape[0]
-        proposal_boxpred            = proposal_boxpred.view(batch_size, -1, self.num_classes, 4)
-        detectbox_normalize_std     = self._detectbox_normalize_std.to(device=proposal_boxpred.device)
-        detectbox_normalize_mean    = self._detectbox_normalize_mean.to(device=proposal_boxpred.device)
-        proposal_boxpred            = proposal_boxpred * detectbox_normalize_std + detectbox_normalize_mean
-
-        proposal_gen_bboxes         = proposal_gen_bboxes.unsqueeze(dim=2).repeat(1, 1, self.num_classes, 1)
-        pred_offset                 = BBox.offset_form_pred_ltrb(proposal_gen_bboxes, proposal_boxpred)
-        detection_bboxes            = BBox.clip(pred_offset, left=0, top=0, right=image_width, bottom=image_height)
-        detection_probs             = tnf.softmax(proposal_classes, dim=-1)
-
-        all_detection_bboxes        = []
-        all_detection_classes       = []
-        all_detection_probs         = []
-        all_detection_batch_indices = []
-
-        for batch_index in range(batch_size):
-            for c in range(1, self.num_classes):
-                class_bboxes = detection_bboxes[batch_index, :, c, :]
-                class_probs = detection_probs[batch_index, :, c]
-                threshold = 0.3
-                # kept_indices = nms(class_bboxes, class_probs, threshold)
-                kept_indices    = ops.nms(class_bboxes, class_probs, threshold)
-                class_bboxes    = class_bboxes[kept_indices]
-                class_probs     = class_probs[kept_indices]
-
-                all_detection_bboxes.append(class_bboxes)
-                all_detection_classes.append(torch.full((len(kept_indices),), c, dtype=torch.int))
-                all_detection_probs.append(class_probs)
-                all_detection_batch_indices.append(torch.full((len(kept_indices),), batch_index, dtype=torch.long))
-
-        all_detection_bboxes        = torch.cat(all_detection_bboxes, dim=0)
-        all_detection_classes       = torch.cat(all_detection_classes, dim=0)
-        all_detection_probs         = torch.cat(all_detection_probs, dim=0)
-        all_detection_batch_indices = torch.cat(all_detection_batch_indices, dim=0)
-
-        return all_detection_bboxes, all_detection_classes, all_detection_probs, all_detection_batch_indices
-
     def getLoss(self,
-                proposal_classes: Tensor,
-                proposal_boxpred: Tensor,
-                gt_proposal_classes: Tensor,
+                proposal_classes:   Tensor,
+                proposal_boxpred:   Tensor,
+                gt_proposal_classes:Tensor,
                 gt_proposal_offset: Tensor,
                 batch_size,
                 batch_indices) -> Tuple[Tensor, Tensor]:
