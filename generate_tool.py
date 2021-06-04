@@ -16,11 +16,10 @@ class GenerateTool(object):
                  post_nms_top_n:    int):
 
         self.num_classes                = num_classes
-        self._anchor_ratios             = anchor_ratios
-        self._anchor_sizes              = anchor_sizes
+        self._anchor_ratios             = np.array(anchor_ratios)
+        self._anchor_sizes              = np.array(anchor_sizes) #16 * scale[8, 16, 32]
         self._pre_nms_top_n             = pre_nms_top_n
         self._post_nms_top_n            = post_nms_top_n
-
         self._detectbox_normalize_mean  = torch.tensor([0.0, 0.0, 0.0, 0.0], dtype=torch.float)
         self._detectbox_normalize_std   = torch.tensor([0.1, 0.1, 0.2, 0.2], dtype=torch.float)
 
@@ -30,7 +29,7 @@ class GenerateTool(object):
         x_center    = np.linspace(start=0, stop=image_width, num=num_x_anchors + 2)[1:-1]
         #ratios      = np.array(self._anchor_ratios)
         #ratios      = ratios[:, 0] / ratios[:, 1]
-        sizes       = np.array(self._anchor_sizes) #16 * scale[8, 16, 32]
+        #sizes       = np.array(self._anchor_sizes)
 
         '''np.set_printoptions(threshold=np.inf)
         print(x_center)
@@ -44,7 +43,7 @@ class GenerateTool(object):
         plt.show()'''
 
         # combine x[], y[] to a mesh grid
-        y_center, x_center, ratios, sizes = np.meshgrid(y_center, x_center, self._anchor_ratios, sizes, indexing='ij')
+        y_center, x_center, ratios, sizes = np.meshgrid(y_center, x_center, self._anchor_ratios, self._anchor_sizes, indexing='ij')
 
         # to 1d
         y_center    = y_center.reshape(-1)
