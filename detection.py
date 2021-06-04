@@ -179,4 +179,5 @@ class Detection(nn.Module):
         # =(flag * 0.5 * (diff ** 2)/beta + (1 - flag) * (diff - 0.5 * beta)
         loss = torch.where(diff < beta, 0.5 * (diff ** 2) / beta, diff - 0.5 * beta)
         loss = loss.sum() / (pred.numel() + 1e-8)
+
         return loss
