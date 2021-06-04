@@ -2,6 +2,7 @@
 - An implementation of [Faster R-CNN](https://arxiv.org/pdf/1506.01497.pdf) in PyTorch.
 - Only python source. These is no need to compile nms and roialign cpp
 - Comment in many functions
+- You can debug any line in cpu mode
 
 ## Prepare install
 - cd faster_rcnn_pytorch
