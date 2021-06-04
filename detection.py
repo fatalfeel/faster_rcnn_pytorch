@@ -98,7 +98,7 @@ class Detection(nn.Module):
 
             proposal_gen_bboxes = proposal_gen_bboxes[selected_indices]
             #gt_bboxes           = gt_bboxes_batch[selected_indices[0], proposal_assignments[selected_indices]]
-            gt_bboxes           = gt_bboxes_batch[0, proposal_assignments[selected_indices]]  # expand faster
+            gt_bboxes           = gt_bboxes_batch[0, proposal_assignments[selected_indices]]  #select gt boxes
             gt_proposal_classes = labels[selected_indices]
             gt_proposal_offset  = BBox.offset_from_gt_center(proposal_gen_bboxes, gt_bboxes)
             batch_indices       = selected_indices[0]
