@@ -12,6 +12,11 @@
 - python3 ./train.py --cuda True --resume True
 - python3 ./infer.py --cuda True
 
+## Performance
+- GeForce GTX 1650
+- Train 3 frames per second
+- Infer 8 frames per second
+
 ##
 You can compare faster_rcnn_pytorch with this
 - https://www.mediafire.com/file/m5wx06gmtqvu1km/simple-faster-rcnn.tar.gz
