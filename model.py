@@ -55,10 +55,6 @@ class Model(nn.Module):
         batch_size, _, image_height, image_width            = image_batch.shape
         _, _, resnet_features_height, resnet_features_width = resnet_features.shape
 
-        '''anchor_gen_bboxes = self.rpn.generate_anchors(image_width,
-                                                      image_height,
-                                                      num_x_anchors=resnet_features_width,
-                                                      num_y_anchors=resnet_features_height ).to(resnet_features).repeat(batch_size, 1, 1)'''
         anchor_gen_bboxes = self.gtool.anchors(image_width,
                                                image_height,
                                                num_x_anchors=resnet_features_width,
@@ -66,56 +62,51 @@ class Model(nn.Module):
 
         if self.training:
             anchor_score, \
-            anchor_pred_bboxes, \
+            anchor_bboxdelta, \
             anchor_score_losses, \
-            anchor_boxpred_losses = self.rpn.forward(resnet_features,
-                                                     anchor_gen_bboxes,
-                                                     gt_bboxes_batch,
-                                                     image_width,
-                                                     image_height)
+            anchor_bboxdelta_losses = self.rpn.forward(resnet_features,
+                                                       anchor_gen_bboxes,
+                                                       gt_bboxes_batch,
+                                                       image_width,
+                                                       image_height)
 
             #it's necessary to detach `proposal_gen_bboxes` here
-            '''proposal_gen_bboxes = self.rpn.generate_proposals(anchor_gen_bboxes,
-                                                              anchor_score,
-                                                              anchor_pred_bboxes,
-                                                              image_width,
-                                                              image_height).detach()'''
             proposal_gen_bboxes = self.gtool.proposals(anchor_gen_bboxes,
                                                        anchor_score,
-                                                       anchor_pred_bboxes,
+                                                       anchor_bboxdelta,
                                                        image_width,
                                                        image_height).detach()
 
 
             proposal_classes, \
-            proposal_pred_bboxes, \
+            proposal_boxdelta, \
             proposal_class_losses, \
-            proposal_boxpred_losses = self.detection.forward(resnet_features,
+            proposal_boxdelta_losses = self.detection.forward(resnet_features,
                                                              proposal_gen_bboxes,
                                                              gt_bboxes_batch,
                                                              gt_labels_batch)
 
             return anchor_score_losses, \
-                   anchor_boxpred_losses, \
+                   anchor_bboxdelta_losses, \
                    proposal_class_losses, \
-                   proposal_boxpred_losses
+                   proposal_boxdelta_losses
         else:
-            anchor_score, anchor_pred_bboxes = self.rpn.forward(resnet_features)
+            anchor_score, anchor_bboxdelta = self.rpn.forward(resnet_features)
 
             proposal_gen_bboxes = self.gtool.proposals(anchor_gen_bboxes,
                                                        anchor_score,
-                                                       anchor_pred_bboxes,
+                                                       anchor_bboxdelta,
                                                        image_width,
                                                        image_height)
 
-            proposal_classes, proposal_pred_bboxes = self.detection.forward(resnet_features, proposal_gen_bboxes)
+            proposal_classes, proposal_boxdelta = self.detection.forward(resnet_features, proposal_gen_bboxes)
 
             detection_bboxes, \
             detection_classes, \
             detection_probs, \
             detection_batch_indices = self.gtool.detections(proposal_gen_bboxes,
                                                             proposal_classes,
-                                                            proposal_pred_bboxes,
+                                                            proposal_boxdelta,
                                                             image_width,
                                                             image_height)
 

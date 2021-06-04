@@ -37,7 +37,7 @@ class Detection(nn.Module):
         self.hidden_layer                   = hidden_layer
         self.num_classes                    = num_classes
         self._proposal_class                = nn.Linear(num_hidden_out, num_classes)
-        self._proposal_boxpred              = nn.Linear(num_hidden_out, num_classes * 4)
+        self._proposal_boxdelta             = nn.Linear(num_hidden_out, num_classes * 4)
         self._proposal_smooth_l1_loss_beta  = proposal_smooth_l1_loss_beta
         self.roipooler                      = RoiPooler()
 
@@ -110,15 +110,15 @@ class Detection(nn.Module):
             hidden  = hidden.view(hidden.shape[0], -1)
 
             proposal_classes    = self._proposal_class(hidden)
-            proposal_boxpred    = self._proposal_boxpred(hidden)
-            proposal_class_losses, proposal_boxpred_losses = self.getLoss(proposal_classes,
-                                                                          proposal_boxpred,
-                                                                          gt_proposal_classes,
-                                                                          gt_proposal_offset,
-                                                                          batch_size,
-                                                                          batch_indices  )
+            proposal_boxdelta   = self._proposal_boxdelta(hidden)
+            proposal_class_losses, proposal_boxdelta_losses = self.getLoss(proposal_classes,
+                                                                           proposal_boxdelta,
+                                                                           gt_proposal_classes,
+                                                                           gt_proposal_offset,
+                                                                           batch_size,
+                                                                           batch_indices)
 
-            return proposal_classes, proposal_boxpred, proposal_class_losses, proposal_boxpred_losses
+            return proposal_classes, proposal_boxdelta, proposal_class_losses, proposal_boxdelta_losses
 
         else:
             batch_indices = torch.arange(end    = batch_size,
@@ -131,12 +131,12 @@ class Detection(nn.Module):
             hidden  = hidden.view(hidden.shape[0], -1)
 
             proposal_classes    = self._proposal_class(hidden)
-            proposal_boxpred    = self._proposal_boxpred(hidden)
+            proposal_boxdelta   = self._proposal_boxdelta(hidden)
 
             proposal_classes    = proposal_classes.view(batch_size, -1, proposal_classes.shape[-1])
-            proposal_boxpred    = proposal_boxpred.view(batch_size, -1, proposal_boxpred.shape[-1])
+            proposal_boxdelta   = proposal_boxdelta.view(batch_size, -1, proposal_boxdelta.shape[-1])
 
-            return proposal_classes, proposal_boxpred
+            return proposal_classes, proposal_boxdelta
 
     def getLoss(self,
                 proposal_classes:   Tensor,

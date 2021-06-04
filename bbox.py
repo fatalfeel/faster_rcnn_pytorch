@@ -20,19 +20,19 @@ class BBox(object):
     '''(x0,y0,x1,y1) to (c0,c1,w,h)'''
     @staticmethod
     #def to_center_base(bboxes: Tensor):
-    def center_wh_transform(bboxes: Tensor) -> Tensor:
-        center_wh = torch.stack(   [(bboxes[..., 0] + bboxes[..., 2]) / 2,
-                                    (bboxes[..., 1] + bboxes[..., 3]) / 2,
-                                    bboxes[..., 2] - bboxes[..., 0],
-                                    bboxes[..., 3] - bboxes[..., 1]],
-                                    dim=-1)
+    def ltrb_to_center(bboxes: Tensor) -> Tensor:
+        center_wh = torch.stack([(bboxes[..., 0] + bboxes[..., 2]) / 2,
+                                 (bboxes[..., 1] + bboxes[..., 3]) / 2,
+                                 bboxes[..., 2] - bboxes[..., 0],
+                                 bboxes[..., 3] - bboxes[..., 1]],
+                                 dim=-1)
 
         return center_wh
 
     '''(c0,c1,w,h) to (x0,y0,x1,y1)'''
     @staticmethod
     #def from_center_base(center_based_bboxes: Tensor) -> Tensor:
-    def lt_rb_transform(center_based_bboxes: Tensor) -> Tensor:
+    def center_to_ltrb(center_based_bboxes: Tensor) -> Tensor:
         '''return torch.stack([center_based_bboxes[..., 0] - center_based_bboxes[..., 2] / 2,
                             center_based_bboxes[..., 1] - center_based_bboxes[..., 3] / 2,
                             center_based_bboxes[..., 0] + center_based_bboxes[..., 2] / 2,
@@ -58,8 +58,8 @@ class BBox(object):
     @staticmethod
     #def calc_transformer(gen_bboxes: Tensor, gt_bboxes: Tensor) -> Tensor:
     def offset_from_gt_center(gen_bboxes: Tensor, gt_bboxes: Tensor) -> Tensor:
-        gen_bboxes_centerbase   = BBox.center_wh_transform(gen_bboxes)
-        gt_bboxes_centerbase    = BBox.center_wh_transform(gt_bboxes)
+        gen_bboxes_centerbase   = BBox.ltrb_to_center(gen_bboxes)
+        gt_bboxes_centerbase    = BBox.ltrb_to_center(gt_bboxes)
         # torch.log is ln
         gt_offset = torch.stack([(gt_bboxes_centerbase[..., 0] - gen_bboxes_centerbase[..., 0]) / gen_bboxes_centerbase[..., 2],
                                  (gt_bboxes_centerbase[..., 1] - gen_bboxes_centerbase[..., 1]) / gen_bboxes_centerbase[..., 3],
@@ -71,26 +71,26 @@ class BBox(object):
     '''
     https://lilianweng.github.io/lil-log/2017/12/31/object-recognition-for-dummies-part-3.html
     https://blog.csdn.net/qq_34106574/article/details/81669891
-    proposal to predict shift and scale
-    ĝx = x_predict * pw + px
-    ĝy = y_predict * ph + py
-    ĝw = exp^(w_predict) * pw
-    ĝh = exp^(h_predict) * ph
+    proposal and bboxdelta to predict ground truth
+    ĝx = dx(p) * pw + px   , dx(p) = bboxdelta[..., 0]
+    ĝy = dy(p) * ph + py   , dy(p) = bboxdelta[..., 1]
+    ĝw = exp^(dw(p)) * pw  , dw(p) = bboxdelta[..., 2]
+    ĝh = exp^(dh(p)) * ph  , dh(p) = bboxdelta[..., 3]
     '''
     @staticmethod
     #def apply_transformer(src_bboxes: Tensor, transformers: Tensor) -> Tensor:
-    def offset_form_pred_ltrb(gen_bboxes: Tensor, pred_bboxes: Tensor) -> Tensor:
-        gen_bboxes_centerbase = BBox.center_wh_transform(gen_bboxes)
+    def bboxdelta_to_predltrb(gen_bboxes: Tensor, bboxdelta: Tensor) -> Tensor:
+        gen_bboxes_centerbase = BBox.ltrb_to_center(gen_bboxes)
         # torch.exp is e^n,
-        pred_offset = torch.stack( [pred_bboxes[..., 0] * gen_bboxes_centerbase[..., 2] + gen_bboxes_centerbase[..., 0],
-                                    pred_bboxes[..., 1] * gen_bboxes_centerbase[..., 3] + gen_bboxes_centerbase[..., 1],
-                                    torch.exp(pred_bboxes[..., 2]) * gen_bboxes_centerbase[..., 2],
-                                    torch.exp(pred_bboxes[..., 3]) * gen_bboxes_centerbase[..., 3]],
-                                    dim=-1 )
+        predcenter = torch.stack([bboxdelta[..., 0] * gen_bboxes_centerbase[..., 2] + gen_bboxes_centerbase[..., 0],
+                                  bboxdelta[..., 1] * gen_bboxes_centerbase[..., 3] + gen_bboxes_centerbase[..., 1],
+                                  torch.exp(bboxdelta[..., 2]) * gen_bboxes_centerbase[..., 2],
+                                  torch.exp(bboxdelta[..., 3]) * gen_bboxes_centerbase[..., 3]],
+                                  dim=-1)
 
-        pred_offset = BBox.lt_rb_transform(pred_offset)
+        predltrb = BBox.center_to_ltrb(predcenter)
 
-        return pred_offset
+        return predltrb
 
     @staticmethod
     def getIoUs(source: Tensor, gtboxes: Tensor) -> Tensor:

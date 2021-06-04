@@ -60,22 +60,22 @@ class GenerateTool(object):
 
         center_based_anchor_bboxes  = np.stack((x_center, y_center, widths, heights), axis=1)
         center_based_anchor_bboxes  = torch.from_numpy(center_based_anchor_bboxes).float()
-        anchor_gen_bboxes           = BBox.lt_rb_transform(center_based_anchor_bboxes)
+        anchor_gen_bboxes           = BBox.center_to_ltrb(center_based_anchor_bboxes)
 
         return anchor_gen_bboxes
 
     def proposals(self,
                   anchor_gen_bboxes:    Tensor,
                   anchor_score:         Tensor,
-                  anchor_pred_bboxes:   Tensor,
+                  anchor_bboxdelta:     Tensor,
                   image_width:          int,
                   image_height:         int) -> Tensor:
         nms_proposal_bboxes_batch   = []
         padded_proposal_bboxes      = []
 
         batch_size          = anchor_gen_bboxes.shape[0]
-        pred_offset         = BBox.offset_form_pred_ltrb(anchor_gen_bboxes, anchor_pred_bboxes)
-        proposal_bboxes     = BBox.clip(pred_offset, left=0, top=0, right=image_width, bottom=image_height)
+        predltrb            = BBox.bboxdelta_to_predltrb(anchor_gen_bboxes, anchor_bboxdelta)
+        proposal_bboxes     = BBox.clip(predltrb, left=0, top=0, right=image_width, bottom=image_height)
         proposal_fg_probs   = tnf.softmax(anchor_score[:, :, 1], dim=-1)
         _, sorted_indices   = torch.sort(proposal_fg_probs, dim=-1, descending=True)
 
@@ -120,8 +120,8 @@ class GenerateTool(object):
         proposal_boxpred            = proposal_boxpred * detectbox_normalize_std + detectbox_normalize_mean
 
         proposal_gen_bboxes         = proposal_gen_bboxes.unsqueeze(dim=2).repeat(1, 1, self.num_classes, 1)
-        pred_offset                 = BBox.offset_form_pred_ltrb(proposal_gen_bboxes, proposal_boxpred)
-        detection_bboxes            = BBox.clip(pred_offset, left=0, top=0, right=image_width, bottom=image_height)
+        predltrb                    = BBox.bboxdelta_to_predltrb(proposal_gen_bboxes, proposal_boxpred)
+        detection_bboxes            = BBox.clip(predltrb, left=0, top=0, right=image_width, bottom=image_height)
         detection_probs             = tnf.softmax(proposal_classes, dim=-1)
 
         all_detection_bboxes        = []
