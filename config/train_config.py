@@ -10,7 +10,7 @@ class TrainConfig(Config):
     PROPOSAL_SMOOTH_L1_LOSS_BETA: float = 1.0
 
     BATCH_SIZE: int             = 1
-    LEARNING_RATE: float        = 0.00001
+    LEARNING_RATE: float        = 0.000001
     MOMENTUM: float             = 0.9
     WEIGHT_DECAY: float         = 0.0005
     STEP_LR_SIZES: List[int]    = [50000, 70000]
@@ -20,7 +20,7 @@ class TrainConfig(Config):
 
     NUM_STEPS_TO_DISPLAY: int   = 20
     NUM_STEPS_TO_SNAPSHOT: int  = 1000
-    NUM_STEPS_TO_FINISH: int    = 200000
+    NUM_STEPS_TO_FINISH: int    = 400000
 
     @classmethod
     def setup(cls,
