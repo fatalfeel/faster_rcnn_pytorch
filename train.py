@@ -136,9 +136,10 @@ def _train():
     time_checkpoint         = time.time()
 
     if args.resume:
-        #step = model.load(args.checkpoint_dir, optimizer, scheduler)
-        step = model.load(args.checkpoint_dir, optimizer)
-        Log.i(f'Model has been restored from file: {args.checkpoint_dir}')
+        #step   = model.load(args.checkpoint_dir, optimizer, scheduler)
+        step    = model.load(args.checkpoint_dir, optimizer)
+        pname   = args.checkpoint_dir + '/model-last.pth'
+        Log.i(f'Model has been restored from file: {pname}')
 
     while not should_stop:
         for _, (_, image_batch, _, bboxes_batch, labels_batch) in enumerate(dataloader):
