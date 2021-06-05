@@ -8,17 +8,16 @@ from bbox import BBox
 class RegionProposalNetwork(nn.Module):
     def __init__(self,
                  num_features_out:          int,
-                 anchor_ratios:             List[Tuple[int, int]],
-                 anchor_sizes:              List[int],
+                 anchor_ratios:             List,
+                 anchor_sizes:              List,
                  anchor_smooth_l1_loss_beta:float):
 
         super().__init__()
 
-        self._anchor_ratios = anchor_ratios
-        self._anchor_sizes  = anchor_sizes
-
-        num_anchor_ratios   = len(self._anchor_ratios)
-        num_anchor_sizes    = len(self._anchor_sizes)
+        #self._anchor_ratios = anchor_ratios
+        #self._anchor_sizes  = anchor_sizes
+        num_anchor_ratios   = len(anchor_ratios)
+        num_anchor_sizes    = len(anchor_sizes)
         num_anchors         = num_anchor_ratios * num_anchor_sizes
 
         self._anchor_smooth_l1_loss_beta = anchor_smooth_l1_loss_beta

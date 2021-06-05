@@ -10,14 +10,14 @@ from bbox import BBox
 class GenerateTool(object):
     def __init__(self,
                  num_classes:       int,
-                 anchor_ratios:     List[Tuple[int, int]],
-                 anchor_sizes:      List[int],
+                 anchor_ratios:     List,
+                 anchor_sizes:      List,
                  pre_nms_top_n:     int,
                  post_nms_top_n:    int):
 
         self.num_classes                = num_classes
-        self._anchor_ratios             = np.array(anchor_ratios)
-        self._anchor_sizes              = np.array(anchor_sizes) #16 * scale[8, 16, 32]
+        self._anchor_ratios             = np.array(anchor_ratios, dtype=np.float64)
+        self._anchor_sizes              = np.array(anchor_sizes,  dtype=np.float64) #16 * scale[8, 16, 32]
         self._pre_nms_top_n             = pre_nms_top_n
         self._post_nms_top_n            = post_nms_top_n
         self._detectbox_normalize_mean  = torch.tensor([0.0, 0.0, 0.0, 0.0], dtype=torch.float)

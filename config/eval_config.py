@@ -9,8 +9,8 @@ class EvalConfig(Config):
     @classmethod
     def setup(cls, image_min_side: float = None,
               image_max_side: float = None,
-              anchor_ratios: List[Tuple[int, int]] = None,
-              anchor_sizes: List[int] = None,
+              anchor_ratios: List = None,
+              anchor_sizes: List = None,
               #pooler_mode: str = None,
               rpn_pre_nms_top_n: int = None,
               rpn_post_nms_top_n: int = None):

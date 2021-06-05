@@ -8,8 +8,8 @@ class Config(object):
     IMAGE_MAX_SIDE: float = 1000.0
 
     #ANCHOR_RATIOS: List[Tuple[int, int]] = [(1, 2), (1, 1), (2, 1)]
-    ANCHOR_RATIOS: List[int]    = [0.5, 1, 2]
-    ANCHOR_SIZES: List[int]     = [128, 256, 512] #16 * scale[8, 16, 32]
+    ANCHOR_RATIOS:  List = [0.5, 1, 2]
+    ANCHOR_SIZES:   List = [128, 256, 512] #16 * scale[8, 16, 32]
     #POOLER_MODE: Pooler.Mode = Pooler.Mode.ALIGN
 
     @classmethod
@@ -23,8 +23,8 @@ class Config(object):
     @classmethod
     def setup(cls, image_min_side: float = None,
               image_max_side: float = None,
-              anchor_ratios: List[Tuple[int, int]] = None,
-              anchor_sizes: List[int] = None):
+              anchor_ratios: List = None,
+              anchor_sizes: List = None):
               #pooler_mode: str = None):
         if image_min_side is not None:
             cls.IMAGE_MIN_SIDE = image_min_side
