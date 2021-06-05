@@ -27,7 +27,7 @@ def str2bool(b_str):
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--dataset',        type=str,       default='voc2007',      help='voc2007, coco2017, voc2007-cat-dog, coco2017-person, coco2017-car, coco2017-animal')
-parser.add_argument('--backbone',       type=str,       default='resnet50',     help='resnet18, resnet50, resnet101')
+parser.add_argument('--backbone',       type=str,       default='resnet101',    help='resnet18, resnet50, resnet101')
 parser.add_argument('--data_dir',       type=str,       default='./data',       help='path to data directory')
 parser.add_argument('--checkpoint_dir', type=str,       default='./checkpoint', help='path to checkpoint')
 parser.add_argument('--resume',         type=str2bool,  default=False ,         help='path to checkpoint')

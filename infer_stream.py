@@ -21,18 +21,16 @@ def str2bool(b_str):
         return False
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--dataset', type=str,          choices=DatasetBase.OPTIONS, required=True, help='name of dataset')
-parser.add_argument('--backbone', type=str,         choices=BackboneBase.OPTIONS, required=True, help='name of backbone model')
-parser.add_argument('--data_dir', type=str,         default='./data', help='path to data directory')
-parser.add_argument('--outputs_dir',    type=str,   default='./output', help='path to outputs directory')
-parser.add_argument('--checkpoint',     type=str,   default='./checkpoint' , help='path to checkpoint')
-parser.add_argument('--probability_threshold',  type=float, default=0.6, help='threshold of detection probability')
+parser.add_argument('--dataset',                type=str,   default='voc2007',      help='name of dataset')
+parser.add_argument('--backbone',               type=str,   default='resnet101',    help='resnet18, resnet50, resnet101')
+parser.add_argument('--checkpoint_dir',         type=str,   default='./checkpoint', help='path to checkpoint')
+parser.add_argument('--probability_threshold',  type=float, default=0.6,            help='threshold of detection probability')
 parser.add_argument('--image_min_side', type=float, help='default: {:g}'.format(Config.IMAGE_MIN_SIDE))
 parser.add_argument('--image_max_side', type=float, help='default: {:g}'.format(Config.IMAGE_MAX_SIDE))
 parser.add_argument('--anchor_ratios', type=str, help='default: "{!s}"'.format(Config.ANCHOR_RATIOS))
 parser.add_argument('--anchor_sizes', type=str, help='default: "{!s}"'.format(Config.ANCHOR_SIZES))
 #parser.add_argument('--pooler_mode', type=str, choices=Pooler.OPTIONS, help='default: {.value:s}'.format(Config.POOLER_MODE))
-parser.add_argument('--rpn_pre_nms_top_n', type=int, help='default: {:d}'.format(Config.RPN_PRE_NMS_TOP_N))
+parser.add_argument('--rpn_pre_nms_top_n',  type=int, help='default: {:d}'.format(Config.RPN_PRE_NMS_TOP_N))
 parser.add_argument('--rpn_post_nms_top_n', type=int, help='default: {:d}'.format(Config.RPN_POST_NMS_TOP_N))
 parser.add_argument('--anchor_smooth_l1_loss_beta', type=float, help='default: {:g}'.format(Config.ANCHOR_SMOOTH_L1_LOSS_BETA))
 parser.add_argument('--proposal_smooth_l1_loss_beta', type=float, help='default: {:g}'.format(Config.PROPOSAL_SMOOTH_L1_LOSS_BETA))
@@ -47,14 +45,15 @@ parser.add_argument('--warm_up_num_iters',      type=int, help='default: {:d}'.f
 parser.add_argument('--num_steps_to_display',   type=int, help='default: {:d}'.format(Config.NUM_STEPS_TO_DISPLAY))
 parser.add_argument('--num_steps_to_snapshot',  type=int, help='default: {:d}'.format(Config.NUM_STEPS_TO_SNAPSHOT))
 parser.add_argument('--num_steps_to_finish',    type=int, help='default: {:d}'.format(Config.NUM_STEPS_TO_FINISH))
-parser.add_argument('--input',                  type=str, help='path to input stream endpoint')
+parser.add_argument('--input',  type=str,       default='./input/test.jpg',     help='path to input image')
+parser.add_argument('--output', type=str,       default='./output/result.jpg',  help='path to output result image')
 parser.add_argument('--period',                 type=int, help='period of inference')
 parser.add_argument('--cuda', default=False,    type=str2bool)
 args = parser.parse_args()
 
 device  = torch.device("cuda" if args.cuda else "cpu")
 
-def _infer_stream(path_to_input_stream_endpoint: str, period_of_inference: int, path_to_checkpoint: str, dataset_name: str, backbone_name: str, prob_thresh: float):
+def _infer_stream(path_to_input_stream_endpoint: str, period_of_inference: int, dataset_name: str, backbone_name: str, prob_thresh: float):
     dataset_class = DatasetBase.from_name(dataset_name)
     backbone = BackboneBase.from_name(backbone_name)(pretrained=False)
     model = Model(backbone,
@@ -65,7 +64,7 @@ def _infer_stream(path_to_input_stream_endpoint: str, period_of_inference: int, 
                   rpn_pre_nms_top_n=Config.RPN_PRE_NMS_TOP_N,
                   rpn_post_nms_top_n=Config.RPN_POST_NMS_TOP_N).to(device)
 
-    model.load(path_to_checkpoint)
+    model.load(args.checkpoint_dir)
 
     if path_to_input_stream_endpoint.isdigit():
         path_to_input_stream_endpoint = int(path_to_input_stream_endpoint)
@@ -123,7 +122,7 @@ if __name__ == '__main__':
     '''parser = argparse.ArgumentParser()
     parser.add_argument('-s', '--dataset', type=str, choices=DatasetBase.OPTIONS, required=True, help='name of dataset')
     parser.add_argument('-b', '--backbone', type=str, choices=BackboneBase.OPTIONS, required=True, help='name of backbone model')
-    parser.add_argument('-c', '--checkpoint', type=str, required=True, help='path to checkpoint')
+    parser.add_argument('-c', '--checkpoint_dir', type=str, required=True, help='path to checkpoint')
     parser.add_argument('-p', '--probability_threshold', type=float, default=0.6, help='threshold of detection probability')
     parser.add_argument('--image_min_side', type=float, help='default: {:g}'.format(Config.IMAGE_MIN_SIDE))
     parser.add_argument('--image_max_side', type=float, help='default: {:g}'.format(Config.IMAGE_MAX_SIDE))
@@ -140,7 +139,7 @@ if __name__ == '__main__':
     period_of_inference = args.period
     dataset_name = args.dataset
     backbone_name = args.backbone
-    path_to_checkpoint = args.checkpoint
+    #path_to_checkpoint = args.checkpoint_dir
     prob_thresh = args.probability_threshold
 
     Config.setup(image_min_side=args.image_min_side,
@@ -156,6 +155,6 @@ if __name__ == '__main__':
         print(f'\t{k} = {v}')
     print(Config.describe())
 
-    _infer_stream(path_to_input_stream_endpoint, period_of_inference, path_to_checkpoint, dataset_name, backbone_name, prob_thresh)
+    _infer_stream(path_to_input_stream_endpoint, period_of_inference, dataset_name, backbone_name, prob_thresh)
 
 #main()
