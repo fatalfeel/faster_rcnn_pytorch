@@ -15,9 +15,10 @@
 
 ## Performance
 - GeForce GTX 1650 4GB
-- CUDA Version 10.2
-- Train 3 frames per second
-- Infer 8 frames per second
+- CUDA version 10.2
+- Resnet-101
+- Train 2.3 frames per second
+- Infer 5 frames per second
 
 ##
 You can compare with simple-faster-rcnn that can debug any line in cpu mode
