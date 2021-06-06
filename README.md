@@ -24,7 +24,7 @@
 You can compare with simple-faster-rcnn that can debug any line in cpu mode
 - https://www.mediafire.com/file/m5wx06gmtqvu1km/simple-faster-rcnn.tar.gz
 
-## Web Site
+## Web site
 - http://fatalfeel.blogspot.com/2013/12/faster-rcnn-in-pytorch.html
 
 ## Refer to
