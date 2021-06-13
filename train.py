@@ -30,7 +30,7 @@ parser.add_argument('--dataset',        type=str,       default='voc2007',      
 parser.add_argument('--backbone',       type=str,       default='resnet101',    help='resnet18, resnet50, resnet101')
 parser.add_argument('--data_dir',       type=str,       default='./data',       help='path to data directory')
 parser.add_argument('--checkpoint_dir', type=str,       default='./checkpoint', help='path to checkpoint')
-parser.add_argument('--resume',         type=str2bool,  default=False ,         help='path to checkpoint')
+parser.add_argument('--resume',         type=str2bool,  default=False ,         help='continue training')
 parser.add_argument('--image_min_side', type=float,     help='default: {:g}'.format(Config.IMAGE_MIN_SIDE))
 parser.add_argument('--image_max_side', type=float,     help='default: {:g}'.format(Config.IMAGE_MAX_SIDE))
 parser.add_argument('--anchor_ratios',  type=str,       help='default: "{!s}"'.format(Config.ANCHOR_RATIOS))
