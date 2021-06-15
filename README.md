@@ -20,6 +20,9 @@
 - Train 2.3 frames per second
 - Infer 5 frames per second
 
+## Pretrained download
+- https://drive.google.com/file/d/13QcGiD__tmu1WHz-BYLhTpH4aVUgudFh
+
 ## Compare and learn
 You can compare with simple-faster-rcnn that can debug any line in cpu mode
 - https://www.mediafire.com/file/m5wx06gmtqvu1km/simple-faster-rcnn.tar.gz
