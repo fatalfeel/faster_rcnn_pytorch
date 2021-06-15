@@ -22,6 +22,7 @@
 
 ## Pretrained download
 - https://drive.google.com/file/d/13QcGiD__tmu1WHz-BYLhTpH4aVUgudFh
+- Copy to ./checkpoint
 
 ## Compare and learn
 You can compare with simple-faster-rcnn that can debug any line in cpu mode
