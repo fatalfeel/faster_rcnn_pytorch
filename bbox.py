@@ -72,10 +72,10 @@ class BBox(object):
     https://lilianweng.github.io/lil-log/2017/12/31/object-recognition-for-dummies-part-3.html
     https://blog.csdn.net/qq_34106574/article/details/81669891
     proposal and bboxdelta to predict ground truth
-    ĝx = dx(p) * pw + px   , dx(p) = bboxdelta[..., 0]
-    ĝy = dy(p) * ph + py   , dy(p) = bboxdelta[..., 1]
-    ĝw = exp^(dw(p)) * pw  , dw(p) = bboxdelta[..., 2]
-    ĝh = exp^(dh(p)) * ph  , dh(p) = bboxdelta[..., 3]
+    ĝx = dx(p) * pw + px , dx(p) = (ĝx-px)/pw = bboxdelta[..., 0]
+    ĝy = dy(p) * ph + py , dy(p) = (ĝy−py)/ph = bboxdelta[..., 1]
+    ĝw = exp^(dw(p)) * pw, dw(p) = ln(ĝw/pw)  = bboxdelta[..., 2]
+    ĝh = exp^(dh(p)) * ph, dh(p) = ln(ĝh/ph)  = bboxdelta[..., 3]
     '''
     @staticmethod
     #def apply_transformer(src_bboxes: Tensor, transformers: Tensor) -> Tensor:
