@@ -49,8 +49,8 @@ parser.add_argument('--step_lr_gamma',                  type=float, help='defaul
 parser.add_argument('--warm_up_factor',                 type=float, help='default: {:g}'.format(Config.WARM_UP_FACTOR))
 parser.add_argument('--warm_up_num_iters',              type=int, help='default: {:d}'.format(Config.WARM_UP_NUM_ITERS))
 parser.add_argument('--num_steps_to_display',           type=int, help='default: {:d}'.format(Config.NUM_STEPS_TO_DISPLAY))
-parser.add_argument('--num_steps_to_snapshot',          type=int, help='default: {:d}'.format(Config.NUM_STEPS_TO_SNAPSHOT))
-parser.add_argument('--num_steps_to_finish',            type=int, help='default: {:d}'.format(Config.NUM_STEPS_TO_FINISH))
+parser.add_argument('--num_save_epoch_freq',            type=int, help='default: {:d}'.format(Config.NUM_SAVE_EPOCH_FREQ))
+parser.add_argument('--num_epoch_to_finish',            type=int, help='default: {:d}'.format(Config.NUM_EPOCH_TO_FINISH))
 parser.add_argument('--cuda',                           type=str2bool, default=False)
 args = parser.parse_args()
 
@@ -124,24 +124,24 @@ def _train():
     optimizer = optim.SGD(model.parameters(), lr=Config.LEARNING_RATE, momentum=Config.MOMENTUM, weight_decay=Config.WEIGHT_DECAY)
     #scheduler = WarmUpMultiStepLR(optimizer, milestones=Config.STEP_LR_SIZES, gamma=Config.STEP_LR_GAMMA, factor=Config.WARM_UP_FACTOR, num_iters=Config.WARM_UP_NUM_ITERS)
 
-    #summary_writer         = SummaryWriter(os.path.join(path_to_checkpoints_dir, 'summaries'))
-
     num_steps_to_display    = Config.NUM_STEPS_TO_DISPLAY
-    num_steps_to_snapshot   = Config.NUM_STEPS_TO_SNAPSHOT
-    num_steps_to_finish     = Config.NUM_STEPS_TO_FINISH
+    num_save_epoch_freq     = Config.NUM_SAVE_EPOCH_FREQ
+    num_epoch_to_finish     = Config.NUM_EPOCH_TO_FINISH
 
-    step                    = 0
-    should_stop             = False
-    losses                  = deque(maxlen=num_steps_to_display)
-    time_checkpoint         = time.time()
+    s_epoch         = 0
+    iters_run       = 0
+    iters_all       = len(dataloader) * num_epoch_to_finish
+    losses          = deque(maxlen=num_steps_to_display)
+    time_checkpoint = time.time()
 
     if args.resume:
-        #step   = model.load(args.checkpoint_dir, optimizer, scheduler)
-        step    = model.load(args.checkpoint_dir, optimizer)
-        pname   = args.checkpoint_dir + '/model-last.pth'
+        #s_epoch = model.load(args.checkpoint_dir, optimizer, scheduler)
+        s_epoch     = model.load(args.checkpoint_dir, optimizer)
+        iters_run   = len(dataloader)*s_epoch
+        pname       = args.checkpoint_dir + '/model-last.pth'
         Log.i(f'Model has been restored from file: {pname}')
 
-    while not should_stop:
+    for epoch in range(s_epoch+1, num_epoch_to_finish+1):
         for _, (_, image_batch, _, bboxes_batch, labels_batch) in enumerate(dataloader):
             batch_size      = image_batch.shape[0]
             image_batch     = image_batch.to(device)
@@ -150,21 +150,21 @@ def _train():
 
             '''
             gt_img  = visdom_bbox(image_batch, bboxes_batch[0], labels_batch[0])
-            pname   = '{}/train_gt{}.png'.format(args.checkpoint_dir, str(step))
+            pname   = '{}/train_gt{}.png'.format(args.checkpoint_dir, str(iters_run))
             save_MNIST(gt_img, pname)
             '''
 
-            anchor_score_losses, \
+            anchor_cls_score_losses, \
             anchor_boxpred_losses, \
             proposal_class_losses, \
             proposal_boxpred_losses = model.train().forward(image_batch, bboxes_batch, labels_batch)
 
-            anchor_score_lossem     = anchor_score_losses.mean()
+            anchor_cls_score_lossem = anchor_cls_score_losses.mean()
             anchor_bboxes_lossem    = anchor_boxpred_losses.mean()
             proposal_class_lossm    = proposal_class_losses.mean()
             proposal_boxpred_lossem = proposal_boxpred_losses.mean()
 
-            loss = anchor_score_lossem + anchor_bboxes_lossem + proposal_class_lossm + proposal_boxpred_lossem
+            loss = anchor_cls_score_lossem + anchor_bboxes_lossem + proposal_class_lossm + proposal_boxpred_lossem
 
             optimizer.zero_grad()
             loss.backward()
@@ -173,26 +173,20 @@ def _train():
 
             losses.append(loss.item())
 
-            step += 1
-            if step == num_steps_to_finish:
-                should_stop = True
-
-            if step % num_steps_to_display == 0:
+            iters_run += 1
+            if iters_run % num_steps_to_display == 0:
                 elapsed_time = time.time() - time_checkpoint
                 time_checkpoint = time.time()
                 steps_per_sec = num_steps_to_display / elapsed_time
                 samples_per_sec = batch_size * steps_per_sec
-                eta = (num_steps_to_finish - step) / steps_per_sec / 3600
+                eta = (iters_all - iters_run) / steps_per_sec / 3600
                 avg_loss = sum(losses) / len(losses)
-                Log.i(f'[Step {step}] Avg. Loss = {avg_loss:.6f}, ({samples_per_sec:.2f} samples/sec; ETA {eta:.1f} hrs)')
+                Log.i(f'[Epoch/Iters-{epoch}/{iters_run}] Avg. Loss = {avg_loss:.6f}, ({samples_per_sec:.2f} samples/sec; ETA {eta:.1f} hrs)')
 
-            if step % num_steps_to_snapshot == 0 or should_stop:
-                #pname   = model.save(args.checkpoint_dir, step, optimizer, scheduler)
-                pname = model.save(args.checkpoint_dir, optimizer, step=step)
-                Log.i(f'Model has been saved to {pname}')
-
-            if should_stop:
-                break
+        if epoch % num_save_epoch_freq == 0:
+            #pname = model.save(args.checkpoint_dir, optimizer, scheduler, epoch)
+            pname = model.save(args.checkpoint_dir, optimizer, epoch=epoch)
+            Log.i(f'Model has been saved to {pname}')
 
 if __name__ == '__main__':
     #prefix = '{}'.format(time.strftime('%Y%m%d%H%M%S'))
@@ -218,8 +212,8 @@ if __name__ == '__main__':
                  warm_up_factor=args.warm_up_factor,
                  warm_up_num_iters=args.warm_up_num_iters,
                  num_steps_to_display=args.num_steps_to_display,
-                 num_steps_to_snapshot=args.num_steps_to_snapshot, 
-				 num_steps_to_finish=args.num_steps_to_finish)
+                 num_save_epoch_freq=args.num_save_epoch_freq,
+				 num_epoch_to_finish=args.num_epoch_to_finish)
 
     #Log.initialize(os.path.join(args.checkpoint_dir,'train.log'))
     prefix  = '{}'.format(time.strftime('%Y%m%d%H%M%S'))

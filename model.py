@@ -61,9 +61,9 @@ class Model(nn.Module):
                                                num_y_anchors=resnet_features_height ).to(resnet_features).repeat(batch_size, 1, 1)
 
         if self.training:
-            anchor_score, \
+            anchor_cls_score, \
             anchor_bboxdelta, \
-            anchor_score_losses, \
+            anchor_cls_score_losses, \
             anchor_bboxdelta_losses = self.rpn.forward(resnet_features,
                                                        anchor_gen_bboxes,
                                                        gt_bboxes_batch,
@@ -72,7 +72,7 @@ class Model(nn.Module):
 
             #it's necessary to detach `proposal_gen_bboxes` here
             proposal_gen_bboxes = self.gtool.proposals(anchor_gen_bboxes,
-                                                       anchor_score,
+                                                       anchor_cls_score,
                                                        anchor_bboxdelta,
                                                        image_width,
                                                        image_height).detach()
@@ -86,15 +86,15 @@ class Model(nn.Module):
                                                              gt_bboxes_batch,
                                                              gt_labels_batch)
 
-            return anchor_score_losses, \
+            return anchor_cls_score_losses, \
                    anchor_bboxdelta_losses, \
                    proposal_class_losses, \
                    proposal_boxdelta_losses
         else:
-            anchor_score, anchor_bboxdelta = self.rpn.forward(resnet_features)
+            anchor_cls_score, anchor_bboxdelta = self.rpn.forward(resnet_features)
 
             proposal_gen_bboxes = self.gtool.proposals(anchor_gen_bboxes,
-                                                       anchor_score,
+                                                       anchor_cls_score,
                                                        anchor_bboxdelta,
                                                        image_width,
                                                        image_height)
@@ -115,18 +115,18 @@ class Model(nn.Module):
                    detection_probs, \
                    detection_batch_indices
 
-    def save(self, checkpoint_dir: str, optimizer: Optimizer = None, scheduler: _LRScheduler = None, step: int = 0) -> str:
+    def save(self, checkpoint_dir: str, optimizer: Optimizer = None, scheduler: _LRScheduler = None, epoch: int = 0) -> str:
         if scheduler is None:
             checkpoint = {'state_dict':             self.state_dict(),
                           'optimizer_state_dict':   optimizer.state_dict(),
-                          'step':                   step}
+                          'epoch':                  epoch}
         else:
             checkpoint = {'state_dict':             self.state_dict(),
                           'optimizer_state_dict':   optimizer.state_dict(),
                           'scheduler_state_dict':   scheduler.state_dict(),
-                          'step':                   step}
+                          'epoch':                  epoch}
 
-        pname       = os.path.join(checkpoint_dir, f'model-{step}.pth')
+        pname       = os.path.join(checkpoint_dir, f'model-{epoch}.pth')
         torch.save(checkpoint, pname)
 
         lastname    = os.path.join(checkpoint_dir, 'model-last.pth')
@@ -146,6 +146,6 @@ class Model(nn.Module):
         if scheduler is not None:
             scheduler.load_state_dict(checkpoint['scheduler_state_dict'])
 
-        step = checkpoint['step']
+        epoch = checkpoint['epoch']
 
-        return step
+        return epoch

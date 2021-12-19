@@ -24,7 +24,7 @@ class RegionProposalNetwork(nn.Module):
 
         self._rpnconvseq        = nn.Sequential(nn.Conv2d(in_channels=num_features_out, out_channels=512, kernel_size=3, stride=1, padding=1),
                                                 nn.ReLU())
-        self._anchor_score      = nn.Conv2d(in_channels=512, out_channels=num_anchors * 2, kernel_size=1, stride=1, padding=0)
+        self._anchor_cls_score  = nn.Conv2d(in_channels=512, out_channels=num_anchors * 2, kernel_size=1, stride=1, padding=0)
         self._anchor_bboxdelta  = nn.Conv2d(in_channels=512, out_channels=num_anchors * 4, kernel_size=1, stride=1, padding=0)
 
     def forward(self,
@@ -37,10 +37,12 @@ class RegionProposalNetwork(nn.Module):
 
         batch_size          = resnet_features.shape[0]
         rpn_features        = self._rpnconvseq(resnet_features) #features = self._rpnconvseq(resnet_output)
-        anchor_score        = self._anchor_score(rpn_features)
+
+        '''https://lilianweng.github.io/lil-log/2017/12/31/object-recognition-for-dummies-part-3.html'''
+        anchor_cls_score    = self._anchor_cls_score(rpn_features)
         anchor_bboxdelta    = self._anchor_bboxdelta(rpn_features)
 
-        anchor_score        = anchor_score.permute(0, 2, 3, 1).contiguous().view(batch_size, -1, 2)
+        anchor_cls_score    = anchor_cls_score.permute(0, 2, 3, 1).contiguous().view(batch_size, -1, 2)
         anchor_bboxdelta    = anchor_bboxdelta.permute(0, 2, 3, 1).contiguous().view(batch_size, -1, 4)
 
         # remove cross-boundary
@@ -51,7 +53,7 @@ class RegionProposalNetwork(nn.Module):
 
             # true part of inside_indices then bboxes get coordinate
             inside_anchor_gen_bboxes    = anchor_gen_bboxes[inside_indices].view(batch_size, -1, anchor_gen_bboxes.shape[2])
-            inside_anchor_score         = anchor_score[inside_indices].view(batch_size, -1, anchor_score.shape[2])
+            inside_anchor_cls_score     = anchor_cls_score[inside_indices].view(batch_size, -1, anchor_cls_score.shape[2])
             inside_anchor_bboxdelta     = anchor_bboxdelta[inside_indices].view(batch_size, -1, anchor_bboxdelta.shape[2])
 
             # torch.full = fill -1 of inside_anchor_gen_bboxes.size(1)
@@ -106,36 +108,35 @@ class RegionProposalNetwork(nn.Module):
             gt_anchor_offset            = BBox.offset_from_gt_center(inside_anchor_gen_bboxes, gt_bboxes)
             batch_indices               = selected_indices[0]
 
-            anchor_score_losses, anchor_bboxdelta_losses = self.getLoss(inside_anchor_score[selected_indices],
-                                                                        inside_anchor_bboxdelta[selected_indices],
-                                                                        gt_anchor_labels,
-                                                                        gt_anchor_offset,
-                                                                        batch_size,
-                                                                        batch_indices)
+            anchor_cls_score_losses, anchor_bboxdelta_losses = self.getLoss(inside_anchor_cls_score[selected_indices],
+                                                                            inside_anchor_bboxdelta[selected_indices],
+                                                                            gt_anchor_labels,
+                                                                            gt_anchor_offset,
+                                                                            batch_size,
+                                                                            batch_indices)
 
-            return anchor_score, anchor_bboxdelta, anchor_score_losses, anchor_bboxdelta_losses
+            return anchor_cls_score, anchor_bboxdelta, anchor_cls_score_losses, anchor_bboxdelta_losses
 
         else:
-            return anchor_score, anchor_bboxdelta
+            return anchor_cls_score, anchor_bboxdelta
 
-    '''https://lilianweng.github.io/lil-log/2017/12/31/object-recognition-for-dummies-part-3.html'''
     def getLoss(self,
-                anchor_score: Tensor,
+                anchor_cls_score: Tensor,
                 anchor_bboxdelta: Tensor,
                 gt_anchor_labels: Tensor,
                 gt_anchor_offset: Tensor,
                 batch_size: int,
                 batch_indices: Tensor) -> Tuple[Tensor, Tensor]:
 
-        cross_entropies = torch.empty(batch_size,   dtype=torch.float, device=anchor_score.device)
-        smooth_l1_losses = torch.empty(batch_size,  dtype=torch.float, device=anchor_bboxdelta.device)
+        cross_entropies     = torch.empty(batch_size,   dtype=torch.float, device=anchor_cls_score.device)
+        smooth_l1_losses    = torch.empty(batch_size,  dtype=torch.float, device=anchor_bboxdelta.device)
 
         for batch_index in range(batch_size):
             #selected_indices = (batch_indices == batch_index).nonzero().view(-1)
-            selected_indices = torch.nonzero(batch_indices == batch_index).view(-1)
+            selected_indices    = torch.nonzero(batch_indices == batch_index).view(-1)
 
-            cross_entropy = tnf.cross_entropy(input =anchor_score[selected_indices],
-                                              target=gt_anchor_labels[selected_indices])
+            cross_entropy       = tnf.cross_entropy(input  = anchor_cls_score[selected_indices],
+                                                    target = gt_anchor_labels[selected_indices])
 
             #fg_indices = gt_anchor_labels[selected_indices].nonzero().view(-1)
             fg_indices = torch.nonzero(gt_anchor_labels[selected_indices]).view(-1)

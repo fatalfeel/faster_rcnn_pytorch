@@ -6,6 +6,7 @@ from torchvision import ops
 from typing import Union, Tuple, Optional
 from bbox import BBox
 
+'''https://erdem.pl/2020/02/understanding-region-of-interest-part-2-ro-i-align'''
 class RoiPooler(object):
     def __init__(self):
         self.scale          = 1 / 16

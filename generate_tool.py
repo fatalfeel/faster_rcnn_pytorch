@@ -72,7 +72,7 @@ class GenerateTool(object):
 
     def proposals(self,
                   anchor_gen_bboxes:    Tensor,
-                  anchor_score:         Tensor,
+                  anchor_cls_score:     Tensor,
                   anchor_bboxdelta:     Tensor,
                   image_width:          int,
                   image_height:         int) -> Tensor:
@@ -82,7 +82,7 @@ class GenerateTool(object):
         batch_size          = anchor_gen_bboxes.shape[0]
         predltrb            = BBox.bboxdelta_to_predltrb(anchor_gen_bboxes, anchor_bboxdelta)
         proposal_bboxes     = BBox.clip(predltrb, left=0, top=0, right=image_width, bottom=image_height)
-        proposal_fg_probs   = tnf.softmax(anchor_score[:, :, 1], dim=-1)
+        proposal_fg_probs   = tnf.softmax(anchor_cls_score[:, :, 1], dim=-1)
         _, sorted_indices   = torch.sort(proposal_fg_probs, dim=-1, descending=True)
 
         for batch_index in range(batch_size):

@@ -1,5 +1,5 @@
 import ast
-from typing import List, Tuple
+from typing import List
 from config.config import Config
 
 class TrainConfig(Config):
@@ -19,8 +19,8 @@ class TrainConfig(Config):
     WARM_UP_NUM_ITERS: int      = 500
 
     NUM_STEPS_TO_DISPLAY: int   = 20
-    NUM_STEPS_TO_SNAPSHOT: int  = 1000
-    NUM_STEPS_TO_FINISH: int    = 400000
+    NUM_SAVE_EPOCH_FREQ: int    = 5
+    NUM_EPOCH_TO_FINISH: int    = 100
 
     @classmethod
     def setup(cls,
@@ -40,8 +40,8 @@ class TrainConfig(Config):
               warm_up_factor: float = None,
               warm_up_num_iters: int = None,
               num_steps_to_display: int = None,
-              num_steps_to_snapshot: int = None,
-              num_steps_to_finish: int = None):
+              num_save_epoch_freq: int = None,
+              num_epoch_to_finish: int = None):
         #super().setup(image_min_side, image_max_side, anchor_ratios, anchor_sizes, pooler_mode)
         super().setup(image_min_side, image_max_side, anchor_ratios, anchor_sizes)
 
@@ -71,7 +71,7 @@ class TrainConfig(Config):
             cls.WARM_UP_NUM_ITERS = warm_up_num_iters
         if num_steps_to_display is not None:
             cls.NUM_STEPS_TO_DISPLAY = num_steps_to_display
-        if num_steps_to_snapshot is not None:
-            cls.NUM_STEPS_TO_SNAPSHOT = num_steps_to_snapshot
-        if num_steps_to_finish is not None:
-            cls.NUM_STEPS_TO_FINISH = num_steps_to_finish
+        if num_save_epoch_freq is not None:
+            cls.NUM_SAVE_EPOCH_FREQ = num_save_epoch_freq
+        if num_epoch_to_finish is not None:
+            cls.NUM_EPOCHS_TO_FINISH = num_epoch_to_finish
