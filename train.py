@@ -177,12 +177,12 @@ def _train():
             losses.append(loss.item())
 
             if iter_batch % num_steps_to_display == 0:
-                elapsed_time = time.time() - time_checkpoint
+                elapsed_time    = time.time() - time_checkpoint
                 time_checkpoint = time.time()
-                steps_per_sec = num_steps_to_display / elapsed_time
+                steps_per_sec   = num_steps_to_display / elapsed_time
                 samples_per_sec = Config.BATCH_SIZE * steps_per_sec
-                eta = (iter_end - step_accu) / steps_per_sec / 3600
-                avg_loss = sum(losses) / len(losses)
+                eta             = (iter_end - step_accu) / steps_per_sec / 3600
+                avg_loss        = sum(losses) / len(losses)
                 Log.i(f'[Epoch/Iters-{epoch}/{iter_batch}] Avg. Loss = {avg_loss:.6f}, ({samples_per_sec:.2f} samples/sec; ETA {eta:.1f} hrs)')
 
         if epoch % num_save_epoch_freq == 0:
