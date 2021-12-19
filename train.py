@@ -90,10 +90,10 @@ def _train():
     device = torch.device("cuda" if args.cuda else "cpu")
     kwargs = {'num_workers': 8, 'pin_memory': True} if args.cuda else {}
 
-    dataset     = DatasetBase.from_name(args.dataset)(args.data_dir, DatasetBase.Mode.TRAIN, args.image_min_side, args.image_max_side)
+    dataset     = DatasetBase.from_name(args.dataset)(args.data_dir, DatasetBase.Mode.TRAIN, Config.IMAGE_MIN_SIDE, Config.IMAGE_MAX_SIDE)
     dataloader  = DataLoader(dataset,
-                             batch_size = args.batch_size,
-                             sampler    = DatasetBase.NearestRatioRandomSampler(dataset.image_ratios, num_neighbors=args.batch_size),
+                             batch_size = Config.BATCH_SIZE,
+                             sampler    = DatasetBase.NearestRatioRandomSampler(dataset.image_ratios, num_neighbors=Config.BATCH_SIZE),
                              collate_fn = DatasetBase.padding_collate_fn,
                              **kwargs)
 
@@ -148,8 +148,8 @@ def _train():
             image_batch     = image_batch.to(device)
             bboxes_batch    = bboxes_batch.to(device)
             labels_batch    = labels_batch.to(device)
-            iter_batch     += args.batch_size
-            step_accu      += args.batch_size
+            iter_batch     += Config.BATCH_SIZE
+            step_accu      += Config.BATCH_SIZE
 
             '''
             gt_img  = visdom_bbox(image_batch, bboxes_batch[0], labels_batch[0])
@@ -176,11 +176,11 @@ def _train():
 
             losses.append(loss.item())
 
-            if step_accu % num_steps_to_display == 0:
+            if iter_batch % num_steps_to_display == 0:
                 elapsed_time = time.time() - time_checkpoint
                 time_checkpoint = time.time()
                 steps_per_sec = num_steps_to_display / elapsed_time
-                samples_per_sec = args.batch_size * steps_per_sec
+                samples_per_sec = Config.BATCH_SIZE * steps_per_sec
                 eta = (iter_end - step_accu) / steps_per_sec / 3600
                 avg_loss = sum(losses) / len(losses)
                 Log.i(f'[Epoch/Iters-{epoch}/{iter_batch}] Avg. Loss = {avg_loss:.6f}, ({samples_per_sec:.2f} samples/sec; ETA {eta:.1f} hrs)')
