@@ -149,6 +149,7 @@ def _train():
             bboxes_batch    = bboxes_batch.to(device)
             labels_batch    = labels_batch.to(device)
             iter_batch     += batch_size
+            step_accu      += batch_size
 
             '''
             gt_img  = visdom_bbox(image_batch, bboxes_batch[0], labels_batch[0])
@@ -175,7 +176,6 @@ def _train():
 
             losses.append(loss.item())
 
-            step_accu += 1
             if step_accu % num_steps_to_display == 0:
                 elapsed_time = time.time() - time_checkpoint
                 time_checkpoint = time.time()
