@@ -129,7 +129,7 @@ def _train():
     num_epoch_to_finish     = Config.NUM_EPOCH_TO_FINISH
 
     s_epoch         = 0
-    iter_accu       = 0
+    step_accu       = 0
     iter_end        = len(dataloader) * num_epoch_to_finish
     losses          = deque(maxlen=num_steps_to_display)
     time_checkpoint = time.time()
@@ -137,20 +137,22 @@ def _train():
     if args.resume:
         #s_epoch = model.load(args.checkpoint_dir, optimizer, scheduler)
         s_epoch     = model.load(args.checkpoint_dir, optimizer)
-        iter_accu   = len(dataloader)*s_epoch
+        step_accu   = len(dataloader)*s_epoch
         pname       = args.checkpoint_dir + '/model-last.pth'
         Log.i(f'Model has been restored from file: {pname}')
 
     for epoch in range(s_epoch+1, num_epoch_to_finish+1):
-        for epiter, (_, image_batch, _, bboxes_batch, labels_batch) in enumerate(dataloader):
+        iter_batch = 0
+        for _, (_, image_batch, _, bboxes_batch, labels_batch) in enumerate(dataloader):
             batch_size      = image_batch.shape[0]
             image_batch     = image_batch.to(device)
             bboxes_batch    = bboxes_batch.to(device)
             labels_batch    = labels_batch.to(device)
+            iter_batch     += batch_size
 
             '''
             gt_img  = visdom_bbox(image_batch, bboxes_batch[0], labels_batch[0])
-            pname   = '{}/train_gt{}.png'.format(args.checkpoint_dir, str(iter_accu))
+            pname   = '{}/train_gt{}.png'.format(args.checkpoint_dir, str(step_accu))
             save_MNIST(gt_img, pname)
             '''
 
@@ -173,15 +175,15 @@ def _train():
 
             losses.append(loss.item())
 
-            iter_accu += 1
-            if iter_accu % num_steps_to_display == 0:
+            step_accu += 1
+            if step_accu % num_steps_to_display == 0:
                 elapsed_time = time.time() - time_checkpoint
                 time_checkpoint = time.time()
                 steps_per_sec = num_steps_to_display / elapsed_time
                 samples_per_sec = batch_size * steps_per_sec
-                eta = (iter_end - iter_accu) / steps_per_sec / 3600
+                eta = (iter_end - step_accu) / steps_per_sec / 3600
                 avg_loss = sum(losses) / len(losses)
-                Log.i(f'[Epoch/Iters-{epoch}/{epiter}] Avg. Loss = {avg_loss:.6f}, ({samples_per_sec:.2f} samples/sec; ETA {eta:.1f} hrs)')
+                Log.i(f'[Epoch/Iters-{epoch}/{iter_batch}] Avg. Loss = {avg_loss:.6f}, ({samples_per_sec:.2f} samples/sec; ETA {eta:.1f} hrs)')
 
         if epoch % num_save_epoch_freq == 0:
             #pname = model.save(args.checkpoint_dir, optimizer, scheduler, epoch)
