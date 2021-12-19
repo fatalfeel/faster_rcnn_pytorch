@@ -36,21 +36,21 @@ parser.add_argument('--image_max_side', type=float,     help='default: {:g}'.for
 parser.add_argument('--anchor_ratios',  type=str,       help='default: "{!s}"'.format(Config.ANCHOR_RATIOS))
 parser.add_argument('--anchor_sizes',   type=str,       help='default: "{!s}"'.format(Config.ANCHOR_SIZES))
 #parser.add_argument('--pooler_mode', type=str, choices=Pooler.OPTIONS, help='default: {.value:s}'.format(Config.POOLER_MODE))
-parser.add_argument('--rpn_pre_nms_top_n',              type=int, help='default: {:d}'.format(Config.RPN_PRE_NMS_TOP_N))
-parser.add_argument('--rpn_post_nms_top_n',             type=int, help='default: {:d}'.format(Config.RPN_POST_NMS_TOP_N))
+parser.add_argument('--rpn_pre_nms_top_n',              type=int,   help='default: {:d}'.format(Config.RPN_PRE_NMS_TOP_N))
+parser.add_argument('--rpn_post_nms_top_n',             type=int,   help='default: {:d}'.format(Config.RPN_POST_NMS_TOP_N))
 parser.add_argument('--anchor_smooth_l1_loss_beta',     type=float, help='default: {:g}'.format(Config.ANCHOR_SMOOTH_L1_LOSS_BETA))
 parser.add_argument('--proposal_smooth_l1_loss_beta',   type=float, help='default: {:g}'.format(Config.PROPOSAL_SMOOTH_L1_LOSS_BETA))
-parser.add_argument('--batch_size',                     type=int, help='default: {:g}'.format(Config.BATCH_SIZE))
+parser.add_argument('--batch_size',                     type=int,   help='default: {:g}'.format(Config.BATCH_SIZE))
 parser.add_argument('--learning_rate',                  type=float, help='default: {:g}'.format(Config.LEARNING_RATE))
 parser.add_argument('--momentum',                       type=float, help='default: {:g}'.format(Config.MOMENTUM))
 parser.add_argument('--weight_decay',                   type=float, help='default: {:g}'.format(Config.WEIGHT_DECAY))
-parser.add_argument('--step_lr_sizes',                  type=str, help='default: {!s}'.format(Config.STEP_LR_SIZES))
+parser.add_argument('--step_lr_sizes',                  type=str,   help='default: {!s}'.format(Config.STEP_LR_SIZES))
 parser.add_argument('--step_lr_gamma',                  type=float, help='default: {:g}'.format(Config.STEP_LR_GAMMA))
 parser.add_argument('--warm_up_factor',                 type=float, help='default: {:g}'.format(Config.WARM_UP_FACTOR))
-parser.add_argument('--warm_up_num_iters',              type=int, help='default: {:d}'.format(Config.WARM_UP_NUM_ITERS))
-parser.add_argument('--num_steps_to_display',           type=int, help='default: {:d}'.format(Config.NUM_STEPS_TO_DISPLAY))
-parser.add_argument('--num_save_epoch_freq',            type=int, help='default: {:d}'.format(Config.NUM_SAVE_EPOCH_FREQ))
-parser.add_argument('--num_epoch_to_finish',            type=int, help='default: {:d}'.format(Config.NUM_EPOCH_TO_FINISH))
+parser.add_argument('--warm_up_num_iters',              type=int,   help='default: {:d}'.format(Config.WARM_UP_NUM_ITERS))
+parser.add_argument('--num_steps_to_display',           type=int,   help='default: {:d}'.format(Config.NUM_STEPS_TO_DISPLAY))
+parser.add_argument('--num_save_epoch_freq',            type=int,   help='default: {:d}'.format(Config.NUM_SAVE_EPOCH_FREQ))
+parser.add_argument('--num_epoch_to_finish',            type=int,   help='default: {:d}'.format(Config.NUM_EPOCH_TO_FINISH))
 parser.add_argument('--cuda',                           type=str2bool, default=False)
 args = parser.parse_args()
 
@@ -90,11 +90,11 @@ def _train():
     device = torch.device("cuda" if args.cuda else "cpu")
     kwargs = {'num_workers': 8, 'pin_memory': True} if args.cuda else {}
 
-    dataset     = DatasetBase.from_name(args.dataset)(args.data_dir, DatasetBase.Mode.TRAIN, Config.IMAGE_MIN_SIDE, Config.IMAGE_MAX_SIDE)
+    dataset     = DatasetBase.from_name(args.dataset)(args.data_dir, DatasetBase.Mode.TRAIN, args.image_min_side, args.image_max_side)
     dataloader  = DataLoader(dataset,
-                             batch_size=Config.BATCH_SIZE,
-                             sampler=DatasetBase.NearestRatioRandomSampler(dataset.image_ratios, num_neighbors=Config.BATCH_SIZE),
-                             collate_fn=DatasetBase.padding_collate_fn,
+                             batch_size = args.batch_size,
+                             sampler    = DatasetBase.NearestRatioRandomSampler(dataset.image_ratios, num_neighbors=args.batch_size),
+                             collate_fn = DatasetBase.padding_collate_fn,
                              **kwargs)
 
     Log.i('Found {:d} samples'.format(len(dataset)))
@@ -144,12 +144,12 @@ def _train():
     for epoch in range(s_epoch+1, num_epoch_to_finish+1):
         iter_batch = 0
         for _, (_, image_batch, _, bboxes_batch, labels_batch) in enumerate(dataloader):
-            batch_size      = image_batch.shape[0]
+            #batch_size      = image_batch.shape[0]
             image_batch     = image_batch.to(device)
             bboxes_batch    = bboxes_batch.to(device)
             labels_batch    = labels_batch.to(device)
-            iter_batch     += batch_size
-            step_accu      += batch_size
+            iter_batch     += args.batch_size
+            step_accu      += args.batch_size
 
             '''
             gt_img  = visdom_bbox(image_batch, bboxes_batch[0], labels_batch[0])
@@ -180,7 +180,7 @@ def _train():
                 elapsed_time = time.time() - time_checkpoint
                 time_checkpoint = time.time()
                 steps_per_sec = num_steps_to_display / elapsed_time
-                samples_per_sec = batch_size * steps_per_sec
+                samples_per_sec = args.batch_size * steps_per_sec
                 eta = (iter_end - step_accu) / steps_per_sec / 3600
                 avg_loss = sum(losses) / len(losses)
                 Log.i(f'[Epoch/Iters-{epoch}/{iter_batch}] Avg. Loss = {avg_loss:.6f}, ({samples_per_sec:.2f} samples/sec; ETA {eta:.1f} hrs)')
