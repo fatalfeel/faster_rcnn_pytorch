@@ -71,6 +71,10 @@ class Detection(nn.Module):
             gt_match_class      = gt_labels_batch[0, morethan_p5_col]   #col pick class in gt_labels_batch
             labels[fg_masks]    = gt_match_class                        #if fg_masks is ture then give gt_class number
 
+            '''for i in range(gt_match_class2.size(0)):
+                if gt_match_class[i] != gt_match_class2[i]:
+                    print('error')'''
+
             # select 128 x `batch_size` samples
             '''
             fg_indices  = (labels > 0).nonzero()
