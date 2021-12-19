@@ -77,7 +77,6 @@ class Model(nn.Module):
                                                        image_width,
                                                        image_height).detach()
 
-
             proposal_classes, \
             proposal_boxdelta, \
             proposal_class_losses, \
