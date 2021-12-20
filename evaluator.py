@@ -1,12 +1,9 @@
-from typing import Tuple
-
 import torch
+from typing import Tuple
 from torch.utils.data import DataLoader
+from dataset.basefile import DatasetBase
 from tqdm import tqdm
-
-from dataset.base import Base as DatasetBase
 from model import Model
-
 
 class Evaluator(object):
     def __init__(self, dataset: DatasetBase, path_to_data_dir: str, path_to_results_dir: str):

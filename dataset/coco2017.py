@@ -1,22 +1,20 @@
-import json
+import sys
 import os
 import pickle
 import random
-from typing import List, Tuple, Dict
-
+import json
 import torch
 import torch.utils.data.dataset
+from typing import List, Tuple, Dict
 from PIL import Image, ImageOps
 from pycocotools.coco import COCO
 from pycocotools.cocoeval import COCOeval
 from torch import Tensor
 from torchvision.datasets import CocoDetection
+from dataset.basefile import DatasetBase
 from tqdm import tqdm
-
 from bbox import BBox
-from dataset.base import DatasetBase
 from io import StringIO
-import sys
 
 class COCO2017(DatasetBase):
     class Annotation(object):

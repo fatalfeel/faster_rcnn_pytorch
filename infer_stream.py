@@ -5,9 +5,8 @@ import random
 import time
 import torch
 import cv2
-
-from dataset.base   import DatasetBase
-from backbone.base  import BackboneBase
+from dataset.basefile import DatasetBase
+from backbone.basenet import BackboneBase
 from PIL import ImageDraw, Image
 from config.eval_config import EvalConfig as Config
 from bbox import BBox
