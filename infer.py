@@ -1,6 +1,7 @@
 import argparse
 import os
 import random
+import time
 import torch
 
 from dataset.base   import DatasetBase
@@ -55,9 +56,13 @@ def _infer(path_to_input_image: str, path_to_output_image: str, dataset_name: st
         image               = transforms.Image.open(path_to_input_image)
         image_tensor, scale = dataset_class.preprocess(image, Config.IMAGE_MIN_SIDE, Config.IMAGE_MAX_SIDE)
 
+        start_time          = time.time_ns()
+
         detection_bboxes, \
         detection_classes, \
-        detection_probs, _  =  model.eval().forward(image_tensor.unsqueeze(dim=0).to(device))
+        detection_probs, _  = model.eval().forward(image_tensor.unsqueeze(dim=0).to(device))
+
+        eval_fps            = 1000000000.0 / (time.time_ns() - start_time)
 
         detection_bboxes   /= scale
 
@@ -77,8 +82,8 @@ def _infer(path_to_input_image: str, path_to_output_image: str, dataset_name: st
             draw.text((bbox.left, bbox.top), text=f'{category:s} {prob:.3f}', fill=color)
 
         image.save(path_to_output_image)
-        print(f'Output image is saved to {path_to_output_image}')
-
+        print(f'Output image save to {path_to_output_image}')
+        print(f'FPS = {eval_fps}\n')
 
 if __name__ == '__main__':
     path_to_input_image     = args.input
