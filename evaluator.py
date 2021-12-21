@@ -1,7 +1,7 @@
 import torch
 from typing import Tuple
 from torch.utils.data import DataLoader
-from dataset.basefile import DatasetBase
+from dataset.baseobject import DatasetBase
 from tqdm import tqdm
 from model import Model
 

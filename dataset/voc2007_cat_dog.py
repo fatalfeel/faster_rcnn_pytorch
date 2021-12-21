@@ -8,7 +8,7 @@ from PIL import Image, ImageOps
 from torch import Tensor
 from bbox import BBox
 from voc_eval import voc_eval
-from dataset.basefile import DatasetBase
+from dataset.baseobject import DatasetBase
 
 class VOC2007CatDog(DatasetBase):
     class Annotation(object):

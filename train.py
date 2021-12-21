@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from torch import optim
 from torch.utils.data import DataLoader
 from collections import deque
-from dataset.basefile import DatasetBase
+from dataset.baseobject import DatasetBase
 from backbone.basenet import BackboneBase
 from config.train_config import TrainConfig as Config
 from logger import Logger as Log

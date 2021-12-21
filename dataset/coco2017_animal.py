@@ -14,7 +14,7 @@ from torch import Tensor
 from torchvision.datasets import CocoDetection
 from tqdm import tqdm
 from bbox import BBox
-from dataset.basefile import DatasetBase
+from dataset.baseobject import DatasetBase
 from dataset.coco2017 import COCO2017
 
 class COCO2017Animal(DatasetBase):

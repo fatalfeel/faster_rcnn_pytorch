@@ -4,7 +4,7 @@ import json
 import numpy as np
 import torch
 import websockets
-from dataset.basefile import DatasetBase
+from dataset.baseobject import DatasetBase
 from backbone.basenet import BackboneBase
 from PIL import Image
 from bbox import BBox
