@@ -3,13 +3,10 @@ from typing import List
 from config.config import Config
 
 class TrainConfig(Config):
-    RPN_PRE_NMS_TOP_N: int  = 12000
-    RPN_POST_NMS_TOP_N: int = 2000
-
-    ANCHOR_SMOOTH_L1_LOSS_BETA: float   = 1.0
-    PROPOSAL_SMOOTH_L1_LOSS_BETA: float = 1.0
-
+    RPN_PRE_NMS_TOP_N: int      = 12000 #smaller can do faster
+    RPN_POST_NMS_TOP_N: int     = 2000  #smaller can do faster
     BATCH_SIZE: int             = 1
+
     LEARNING_RATE: float        = 0.00001
     MOMENTUM: float             = 0.9
     WEIGHT_DECAY: float         = 0.0005
@@ -21,6 +18,9 @@ class TrainConfig(Config):
     NUM_STEPS_TO_DISPLAY: int   = 20
     NUM_SAVE_EPOCH_FREQ: int    = 5
     NUM_EPOCH_TO_FINISH: int    = 100
+
+    ANCHOR_SMOOTH_L1_LOSS_BETA: float   = 1.0
+    PROPOSAL_SMOOTH_L1_LOSS_BETA: float = 1.0
 
     @classmethod
     def setup(cls,

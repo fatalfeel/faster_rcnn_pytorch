@@ -2,9 +2,9 @@ from typing import List, Tuple
 from config.config import Config
 
 class EvalConfig(Config):
-
-    RPN_PRE_NMS_TOP_N: int  = 6000
-    RPN_POST_NMS_TOP_N: int = 300
+    RPN_PRE_NMS_TOP_N: int  = 6000 #smaller can do faster
+    #RPN_POST_NMS_TOP_N: int = 300
+    RPN_POST_NMS_TOP_N: int = 1000 #smaller can do faster
     BATCH_SIZE: int         = 1
 
     @classmethod

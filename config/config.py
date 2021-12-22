@@ -3,7 +3,6 @@ from typing import Tuple, List
 #from roi.pooler import Pooler
 
 class Config(object):
-
     IMAGE_MIN_SIDE: float = 600.0
     IMAGE_MAX_SIDE: float = 1000.0
 
@@ -21,7 +20,8 @@ class Config(object):
         return text
 
     @classmethod
-    def setup(cls, image_min_side: float = None,
+    def setup(cls,
+              image_min_side: float = None,
               image_max_side: float = None,
               anchor_ratios: List = None,
               anchor_sizes: List = None):
