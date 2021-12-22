@@ -17,39 +17,39 @@ def str2bool(b_str):
         return False
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--dataset',        type=str,   default='voc2007',      help='name of dataset')
-parser.add_argument('--backbone',       type=str,   default='resnet101',    help='resnet18, resnet50, resnet101')
-parser.add_argument('--data_dir',       type=str,   default='./data',       help='path to data directory')
-parser.add_argument('--checkpoint',     type=str,   default='./checkpoint', help='path to checkpoint')
-parser.add_argument('--image_min_side', type=float, help='default: {:g}'.format(Config.IMAGE_MIN_SIDE))
-parser.add_argument('--image_max_side', type=float, help='default: {:g}'.format(Config.IMAGE_MAX_SIDE))
-parser.add_argument('--anchor_ratios',  type=str,   help='default: "{!s}"'.format(Config.ANCHOR_RATIOS))
-parser.add_argument('--anchor_sizes',   type=str,   help='default: "{!s}"'.format(Config.ANCHOR_SIZES))
+parser.add_argument('--dataset',                        type=str,       default='voc2007',      help='name of dataset')
+parser.add_argument('--backbone',                       type=str,       default='resnet101',    help='resnet18, resnet50, resnet101')
+parser.add_argument('--data_dir',                       type=str,       default='./data',       help='path to data directory')
+parser.add_argument('--checkpoint',                     type=str,       default='./checkpoint', help='path to checkpoint')
+parser.add_argument('--image_min_side',                 type=float,     help='default: {:g}'.format(Config.IMAGE_MIN_SIDE))
+parser.add_argument('--image_max_side',                 type=float,     help='default: {:g}'.format(Config.IMAGE_MAX_SIDE))
+parser.add_argument('--anchor_ratios',                  type=str,       help='default: "{!s}"'.format(Config.ANCHOR_RATIOS))
+parser.add_argument('--anchor_sizes',                   type=str,       help='default: "{!s}"'.format(Config.ANCHOR_SIZES))
 #parser.add_argument('--pooler_mode', type=str, choices=Pooler.OPTIONS, help='default: {.value:s}'.format(Config.POOLER_MODE))
-parser.add_argument('--rpn_pre_nms_top_n', type=int, help='default: {:d}'.format(Config.RPN_PRE_NMS_TOP_N))
-parser.add_argument('--rpn_post_nms_top_n', type=int, help='default: {:d}'.format(Config.RPN_POST_NMS_TOP_N))
-parser.add_argument('--anchor_smooth_l1_loss_beta', type=float, help='default: {:g}'.format(Config.ANCHOR_SMOOTH_L1_LOSS_BETA))
-parser.add_argument('--proposal_smooth_l1_loss_beta', type=float, help='default: {:g}'.format(Config.PROPOSAL_SMOOTH_L1_LOSS_BETA))
-parser.add_argument('--batch_size', type=int, help='default: {:g}'.format(Config.BATCH_SIZE))
-parser.add_argument('--learning_rate', type=float, help='default: {:g}'.format(Config.LEARNING_RATE))
-parser.add_argument('--momentum', type=float, help='default: {:g}'.format(Config.MOMENTUM))
-parser.add_argument('--weight_decay', type=float, help='default: {:g}'.format(Config.WEIGHT_DECAY))
-parser.add_argument('--step_lr_sizes', type=str, help='default: {!s}'.format(Config.STEP_LR_SIZES))
-parser.add_argument('--step_lr_gamma', type=float, help='default: {:g}'.format(Config.STEP_LR_GAMMA))
-parser.add_argument('--warm_up_factor', type=float, help='default: {:g}'.format(Config.WARM_UP_FACTOR))
-parser.add_argument('--warm_up_num_iters', type=int, help='default: {:d}'.format(Config.WARM_UP_NUM_ITERS))
-parser.add_argument('--cuda', default=False, type=str2bool)
+parser.add_argument('--rpn_pre_nms_top_n',              type=int,       help='default: {:d}'.format(Config.RPN_PRE_NMS_TOP_N))
+parser.add_argument('--rpn_post_nms_top_n',             type=int,       help='default: {:d}'.format(Config.RPN_POST_NMS_TOP_N))
+parser.add_argument('--anchor_smooth_l1_loss_beta',     type=float,     help='default: {:g}'.format(Config.ANCHOR_SMOOTH_L1_LOSS_BETA))
+parser.add_argument('--proposal_smooth_l1_loss_beta',   type=float,     help='default: {:g}'.format(Config.PROPOSAL_SMOOTH_L1_LOSS_BETA))
+parser.add_argument('--batch_size',                     type=int,       help='default: {:g}'.format(Config.BATCH_SIZE))
+parser.add_argument('--learning_rate',                  type=float,     help='default: {:g}'.format(Config.LEARNING_RATE))
+parser.add_argument('--momentum',                       type=float,     help='default: {:g}'.format(Config.MOMENTUM))
+parser.add_argument('--weight_decay',                   type=float,     help='default: {:g}'.format(Config.WEIGHT_DECAY))
+parser.add_argument('--step_lr_sizes',                  type=str,       help='default: {!s}'.format(Config.STEP_LR_SIZES))
+parser.add_argument('--step_lr_gamma',                  type=float,     help='default: {:g}'.format(Config.STEP_LR_GAMMA))
+parser.add_argument('--warm_up_factor',                 type=float,     help='default: {:g}'.format(Config.WARM_UP_FACTOR))
+parser.add_argument('--warm_up_num_iters',              type=int,       help='default: {:d}'.format(Config.WARM_UP_NUM_ITERS))
+parser.add_argument('--output',                         type=str,       default='./output',  help='path to output result image')
+parser.add_argument('--cuda',                           type=str2bool,  default=False)
 args = parser.parse_args()
 
-device  = torch.device("cuda" if args.cuda else "cpu")
-
-def _eval(path_to_checkpoint: str, dataset_name: str, backbone_name: str, path_to_data_dir: str, path_to_results_dir: str):
-    dataset = DatasetBase.from_name(dataset_name)(path_to_data_dir, DatasetBase.Mode.EVAL, Config.IMAGE_MIN_SIDE, Config.IMAGE_MAX_SIDE)
-    evaluator = Evaluator(dataset, path_to_data_dir, path_to_results_dir)
+def _eval(path_to_results_dir: str):
+    device      = torch.device("cuda" if args.cuda else "cpu")
+    dataset     = DatasetBase.from_name(args.dataset)(args.data_dir, DatasetBase.Mode.EVAL, Config.IMAGE_MIN_SIDE, Config.IMAGE_MAX_SIDE)
+    evaluator   = Evaluator(dataset, args.data_dir, path_to_results_dir)
 
     Log.i('Found {:d} samples'.format(len(dataset)))
 
-    backbone = BackboneBase.from_name(backbone_name)(pretrained=False)
+    backbone = BackboneBase.from_name(args.backbone)(pretrained=False)
     model = Model(backbone,
                   dataset.num_classes(),
                   #pooler_mode=Config.POOLER_MODE,
@@ -58,7 +58,7 @@ def _eval(path_to_checkpoint: str, dataset_name: str, backbone_name: str, path_t
                   rpn_pre_nms_top_n=Config.RPN_PRE_NMS_TOP_N,
                   rpn_post_nms_top_n=Config.RPN_POST_NMS_TOP_N).to(device)
 
-    model.load(path_to_checkpoint)
+    model.load(args.checkpoint)
 
     Log.i('Start evaluating with 1 GPU (1 batch per GPU)')
     mean_ap, detail = evaluator.evaluate(model)
@@ -83,15 +83,7 @@ if __name__ == '__main__':
     parser.add_argument('checkpoint', type=str, help='path to evaluating checkpoint')
     args = parser.parse_args()'''
 
-    path_to_checkpoint = args.checkpoint
-    dataset_name = args.dataset
-    backbone_name = args.backbone
-    path_to_data_dir = args.data_dir
-
-    path_to_results_dir = os.path.join(os.path.dirname(path_to_checkpoint),
-                                       'results-{:s}-{:s}-{:s}'.format( time.strftime('%Y%m%d%H%M%S'),
-                                                                        path_to_checkpoint.split(os.path.sep)[-1].split(os.path.curdir)[0],
-                                                                        str(uuid.uuid4()).split('-')[0]))
+    path_to_results_dir = os.path.join(args.output,'{:s}'.format(time.strftime('%Y%m%d%H%M%S')))
     os.makedirs(path_to_results_dir)
 
     Config.setup(image_min_side=args.image_min_side,
@@ -108,5 +100,5 @@ if __name__ == '__main__':
         Log.i(f'\t{k} = {v}')
     Log.i(Config.describe())
 
-    _eval(path_to_checkpoint, dataset_name, backbone_name, path_to_data_dir, path_to_results_dir)
+    _eval(path_to_results_dir)
 #main()
