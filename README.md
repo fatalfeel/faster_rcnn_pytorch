@@ -21,7 +21,7 @@
 - Infer 5 frames per second
 
 ## Pretrained download
-- https://drive.google.com/u/0/uc?id=13QcGiD__tmu1WHz-BYLhTpH4aVUgudFh
+- https://drive.google.com/file/d/1jQ6llxwUsWLv8ga4MClM0SbFLddJTFR8
 - Copy to ./checkpoint
 
 ## Compare and learn
