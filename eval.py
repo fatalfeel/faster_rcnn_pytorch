@@ -28,35 +28,28 @@ parser.add_argument('--anchor_sizes',                   type=str,       help='de
 #parser.add_argument('--pooler_mode', type=str, choices=Pooler.OPTIONS, help='default: {.value:s}'.format(Config.POOLER_MODE))
 parser.add_argument('--rpn_pre_nms_top_n',              type=int,       help='default: {:d}'.format(Config.RPN_PRE_NMS_TOP_N))
 parser.add_argument('--rpn_post_nms_top_n',             type=int,       help='default: {:d}'.format(Config.RPN_POST_NMS_TOP_N))
-parser.add_argument('--anchor_smooth_l1_loss_beta',     type=float,     help='default: {:g}'.format(Config.ANCHOR_SMOOTH_L1_LOSS_BETA))
-parser.add_argument('--proposal_smooth_l1_loss_beta',   type=float,     help='default: {:g}'.format(Config.PROPOSAL_SMOOTH_L1_LOSS_BETA))
 parser.add_argument('--batch_size',                     type=int,       help='default: {:g}'.format(Config.BATCH_SIZE))
-parser.add_argument('--learning_rate',                  type=float,     help='default: {:g}'.format(Config.LEARNING_RATE))
-parser.add_argument('--momentum',                       type=float,     help='default: {:g}'.format(Config.MOMENTUM))
-parser.add_argument('--weight_decay',                   type=float,     help='default: {:g}'.format(Config.WEIGHT_DECAY))
-parser.add_argument('--step_lr_sizes',                  type=str,       help='default: {!s}'.format(Config.STEP_LR_SIZES))
-parser.add_argument('--step_lr_gamma',                  type=float,     help='default: {:g}'.format(Config.STEP_LR_GAMMA))
-parser.add_argument('--warm_up_factor',                 type=float,     help='default: {:g}'.format(Config.WARM_UP_FACTOR))
-parser.add_argument('--warm_up_num_iters',              type=int,       help='default: {:d}'.format(Config.WARM_UP_NUM_ITERS))
 parser.add_argument('--output',                         type=str,       default='./output',  help='path to output result image')
 parser.add_argument('--cuda',                           type=str2bool,  default=False)
 args = parser.parse_args()
 
 def _eval(path_to_results_dir: str):
     device      = torch.device("cuda" if args.cuda else "cpu")
+    kwargs      = {'num_workers': 8, 'pin_memory': True} if args.cuda else {}
+
     dataset     = DatasetBase.from_name(args.dataset)(args.data_dir, DatasetBase.Mode.EVAL, Config.IMAGE_MIN_SIDE, Config.IMAGE_MAX_SIDE)
-    evaluator   = Evaluator(dataset, args.data_dir, path_to_results_dir)
+    evaluator   = Evaluator(dataset, Config.BATCH_SIZE, args.data_dir, path_to_results_dir, device, kwargs)
 
     Log.i('Found {:d} samples'.format(len(dataset)))
 
-    backbone = BackboneBase.from_name(args.backbone)(pretrained=False)
-    model = Model(backbone,
-                  dataset.num_classes(),
-                  #pooler_mode=Config.POOLER_MODE,
-                  anchor_ratios=Config.ANCHOR_RATIOS,
-                  anchor_sizes=Config.ANCHOR_SIZES,
-                  rpn_pre_nms_top_n=Config.RPN_PRE_NMS_TOP_N,
-                  rpn_post_nms_top_n=Config.RPN_POST_NMS_TOP_N).to(device)
+    backbone    = BackboneBase.from_name(args.backbone)(pretrained=False)
+    model       = Model(backbone,
+                        dataset.num_classes(),
+                        #pooler_mode=Config.POOLER_MODE,
+                        anchor_ratios     = Config.ANCHOR_RATIOS,
+                        anchor_sizes      = Config.ANCHOR_SIZES,
+                        rpn_pre_nms_top_n = Config.RPN_PRE_NMS_TOP_N,
+                        rpn_post_nms_top_n= Config.RPN_POST_NMS_TOP_N).to(device)
 
     model.load(args.checkpoint)
 
