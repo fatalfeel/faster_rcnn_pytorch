@@ -39,7 +39,7 @@ def _infer(path_to_input_image: str, path_to_output_image: str, dataset_name: st
     device          = torch.device("cuda" if args.cuda else "cpu")
 
     dataset_class   = DatasetBase.from_name(dataset_name)
-    backbone        = BackboneBase.from_name(backbone_name)(pretrained=False)
+    backbone        = BackboneBase.from_name(backbone_name)(pretrained=True)
 
     model = Model(backbone,
                   dataset_class.num_classes(),

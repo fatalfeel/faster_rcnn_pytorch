@@ -51,7 +51,7 @@ device  = torch.device("cuda" if args.cuda else "cpu")
 
 def _infer_stream(path_to_input_stream_endpoint: str, period_of_inference: int, dataset_name: str, backbone_name: str, prob_thresh: float):
     dataset_class = DatasetBase.from_name(dataset_name)
-    backbone = BackboneBase.from_name(backbone_name)(pretrained=False)
+    backbone = BackboneBase.from_name(backbone_name)(pretrained=True)
     model = Model(backbone,
                   dataset_class.num_classes(),
                   #pooler_mode=Config.POOLER_MODE,

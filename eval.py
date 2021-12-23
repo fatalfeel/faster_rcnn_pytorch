@@ -42,7 +42,7 @@ def _eval(path_to_results_dir: str):
 
     Log.i('Found {:d} samples'.format(len(dataset)))
 
-    backbone    = BackboneBase.from_name(args.backbone)(pretrained=False)
+    backbone    = BackboneBase.from_name(args.backbone)(pretrained=True)
     model       = Model(backbone,
                         dataset.num_classes(),
                         #pooler_mode=Config.POOLER_MODE,
