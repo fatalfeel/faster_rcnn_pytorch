@@ -11,7 +11,7 @@ class RoiPooler(object):
     def __init__(self):
         self.scale          = 1 / 16
         self.output_size    = (7 * 2, 7 * 2)
-        self.RoIAlign       = ops.RoIAlign(self.output_size, self.scale, 0, True)
+        self.RoIAlign       = ops.RoIAlign(self.output_size, self.scale, 0)
 
     def apply(self,
               resnet_features:      Tensor,
