@@ -85,10 +85,10 @@ class GenerateTool(object):
         proposal_fg_probs   = tnf.softmax(anchor_cls_score[:, :, 1], dim=-1)
         _, sorted_indices   = torch.sort(proposal_fg_probs, dim=-1, descending=True)
 
+        threshold = 0.7
         for batch_index in range(batch_size):
             sorted_bboxes   = proposal_bboxes[batch_index][sorted_indices[batch_index]][:self._pre_nms_top_n]
             sorted_probs    = proposal_fg_probs[batch_index][sorted_indices[batch_index]][:self._pre_nms_top_n]
-            threshold       = 0.7
             #kept_indices = nms(sorted_bboxes, sorted_probs, threshold)
             kept_indices    = ops.nms(sorted_bboxes, sorted_probs, threshold)
             nms_bboxes      = sorted_bboxes[kept_indices][:self._post_nms_top_n] #keep the most is 2000 bboxes
@@ -130,11 +130,11 @@ class GenerateTool(object):
         all_detection_probs         = []
         all_detection_batch_indices = []
 
+        threshold = 0.3
         for batch_index in range(batch_size):
             for c in range(1, self.num_classes):
                 class_bboxes = detection_bboxes[batch_index, :, c, :]
                 class_probs = detection_probs[batch_index, :, c]
-                threshold = 0.3
                 # kept_indices = nms(class_bboxes, class_probs, threshold)
                 kept_indices    = ops.nms(class_bboxes, class_probs, threshold)
                 class_bboxes    = class_bboxes[kept_indices]
