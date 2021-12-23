@@ -1,7 +1,6 @@
 import argparse
 import os
 import time
-import uuid
 import torch
 from dataset.baseobject import DatasetBase
 from backbone.basenet import BackboneBase
