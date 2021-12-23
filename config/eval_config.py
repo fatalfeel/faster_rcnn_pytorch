@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import List
 from config.config import Config
 
 class EvalConfig(Config):
