@@ -102,18 +102,7 @@ class GenerateTool(object):
             '''padded_proposal_bboxes.append(torch.cat([nms_proposal_bboxes,
                                              torch.zeros(max_nms_proposal_bboxes_length - len(nms_proposal_bboxes), 4).to(nms_proposal_bboxes)]))'''
             remain = max_nms_proposal_bboxes_length - len(nms_proposal_bboxes)
-            if remain > 0:
-                zeros       = torch.zeros(remain, 4).to(nms_proposal_bboxes)
-                nms_zeros   = torch.cat([nms_proposal_bboxes, zeros])
-                padded_proposal_bboxes.append(nms_zeros)
-            else:
-                padded_proposal_bboxes.append(nms_proposal_bboxes)
-
-        '''for i in range(len(padded_proposal_bboxes2)):
-            for j in range(padded_proposal_bboxes2[i].size(0)):
-                for k in range(padded_proposal_bboxes2[i].size(1)):
-                    if padded_proposal_bboxes[i][j,k] != padded_proposal_bboxes2[i][j,k]:
-                        print('error')'''
+            padded_proposal_bboxes.append(torch.cat([nms_proposal_bboxes, torch.zeros(remain,4).to(nms_proposal_bboxes)]))
 
         padded_proposal_bboxes = torch.stack(padded_proposal_bboxes, dim=0)
 

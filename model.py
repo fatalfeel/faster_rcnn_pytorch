@@ -80,9 +80,9 @@ class Model(nn.Module):
             proposal_boxdelta, \
             proposal_class_losses, \
             proposal_boxdelta_losses = self.detection.forward(resnet_features,
-                                                             proposal_gen_bboxes,
-                                                             gt_bboxes_batch,
-                                                             gt_labels_batch)
+                                                              proposal_gen_bboxes,
+                                                              gt_bboxes_batch,
+                                                              gt_labels_batch)
 
             return anchor_cls_score_losses, \
                    anchor_bboxdelta_losses, \
