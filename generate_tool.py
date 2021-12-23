@@ -59,7 +59,7 @@ class GenerateTool(object):
 
         #widths  = sizes * np.sqrt(1.0 / ratios)
         #heights = sizes * np.sqrt(ratios)
-        h_ratios = np.sqrt(ratios) #faster way
+        h_ratios = torch.sqrt(ratios) #faster way
         heights  = sizes * h_ratios
         widths   = sizes * (1.0 / h_ratios)
 
