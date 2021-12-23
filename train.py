@@ -160,11 +160,11 @@ def _train():
             proposal_boxpred_losses = model.train().forward(image_batch, bboxes_batch, labels_batch)
 
             anchor_cls_score_lossem = anchor_cls_score_losses.mean()
-            anchor_bboxes_lossem    = anchor_boxpred_losses.mean()
+            anchor_boxpred_lossem   = anchor_boxpred_losses.mean()
             proposal_class_lossm    = proposal_class_losses.mean()
             proposal_boxpred_lossem = proposal_boxpred_losses.mean()
 
-            loss = anchor_cls_score_lossem + anchor_bboxes_lossem + proposal_class_lossm + proposal_boxpred_lossem
+            loss = anchor_cls_score_lossem + anchor_boxpred_lossem + proposal_class_lossm + proposal_boxpred_lossem
 
             optimizer.zero_grad()
             loss.backward()
