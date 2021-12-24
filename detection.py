@@ -7,7 +7,7 @@ from typing import Union, Tuple, Optional
 from bbox import BBox
 
 '''https://erdem.pl/2020/02/understanding-region-of-interest-part-2-ro-i-align'''
-class RoiPooler(object):
+'''class RoiPooler(object):
     def __init__(self):
         self.scale          = 1 / 16
         self.output_size    = (7 * 2, 7 * 2)
@@ -24,7 +24,7 @@ class RoiPooler(object):
         pool                = self.RoIAlign(resnet_features, indices_bboxes)
         pool                = tnf.max_pool2d(input=pool, kernel_size=2, stride=2)
 
-        return pool
+        return pool'''
 
 class Detection(nn.Module):
     # def __init__(self, pooler_mode: Pooler.Mode, hidden: nn.Module, num_hidden_out: int, num_classes: int, proposal_smooth_l1_loss_beta: float):
@@ -40,10 +40,24 @@ class Detection(nn.Module):
         self._proposal_class                = nn.Linear(num_hidden_out, num_classes)
         self._proposal_boxdelta             = nn.Linear(num_hidden_out, num_classes * 4)
         self._proposal_smooth_l1_loss_beta  = proposal_smooth_l1_loss_beta
-        self.roipooler                      = RoiPooler()
+        #self.roipooler                      = RoiPooler()
+        self._roialign                      = ops.RoIAlign((7 * 2, 7 * 2), 1 / 16, 0)
 
         self._detectbox_normalize_mean      = torch.tensor([0.0, 0.0, 0.0, 0.0], dtype=torch.float)
         self._detectbox_normalize_std       = torch.tensor([0.1, 0.1, 0.2, 0.2], dtype=torch.float)
+
+    def roipool(self,
+                resnet_features:      Tensor,
+                proposal_gen_bboxes:  Tensor,
+                batch_indices:        Tensor) -> Tensor:
+
+        #pool               = self.RoIAlign(resnet_features, torch.cat([batch_indices.view(-1, 1).float(), proposal_gen_bboxes], dim=1))
+        proposal_indices    = batch_indices.view(-1, 1).float()
+        indices_bboxes      = torch.cat([proposal_indices, proposal_gen_bboxes], dim=1)
+        pool                = self._roialign(resnet_features, indices_bboxes)
+        pool                = tnf.max_pool2d(input=pool, kernel_size=2, stride=2)
+
+        return pool
 
     def forward(self,
                 resnet_features:    Tensor,
@@ -109,7 +123,8 @@ class Detection(nn.Module):
             batch_indices       = selected_indices[0]
 
             # pool = Pooler.apply(resnet_features, proposal_gen_bboxes, proposal_batch_indices=batch_indices, mode=self._pooler_mode)
-            pool    = self.roipooler.apply(resnet_features, proposal_gen_bboxes, batch_indices)
+            #pool    = self.roipooler.apply(resnet_features, proposal_gen_bboxes, batch_indices)
+            pool    = self.roipool(resnet_features, proposal_gen_bboxes, batch_indices)
             hidden  = self.hidden_layer(pool)
             hidden  = tnf.adaptive_max_pool2d(input=hidden, output_size=1)
             hidden  = hidden.view(hidden.shape[0], -1)
