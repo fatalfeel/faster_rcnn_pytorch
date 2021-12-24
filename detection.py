@@ -145,7 +145,8 @@ class Detection(nn.Module):
                                          dtype  = torch.long,
                                          device = proposal_gen_bboxes.device).view(-1, 1).repeat(1, proposal_gen_bboxes.shape[1])
             # pool = Pooler.apply(resnet_features, proposal_gen_bboxes.view(-1, 4), batch_indices.view(-1), mode=self._pooler_mode)
-            pool    = self.roipooler.apply(resnet_features, proposal_gen_bboxes.view(-1, 4), batch_indices.view(-1))
+            #pool    = self.roipooler.apply(resnet_features, proposal_gen_bboxes.view(-1, 4), batch_indices.view(-1))
+            pool    = self.roipool(resnet_features, proposal_gen_bboxes.view(-1, 4), batch_indices.view(-1))
             hidden  = self.hidden_layer(pool)
             hidden  = tnf.adaptive_max_pool2d(input=hidden, output_size=1)
             hidden  = hidden.view(hidden.shape[0], -1)
