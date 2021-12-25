@@ -11,7 +11,7 @@ class TrainConfig(Config):
     MOMENTUM: float             = 0.9
     WEIGHT_DECAY: float         = 0.0005 #avoid too fit
     #STEP_LR_SIZES: List[int]    = [50000, 70000]
-    EPOCH_LR_STEP: [int]        = 10
+    EPOCH_LR_FREQ: [int]        = 10
     STEP_LR_GAMMA: float        = 0.999
     #WARM_UP_FACTOR: float       = 0.3333
     #WARM_UP_NUM_ITERS: int      = 500
@@ -39,7 +39,7 @@ class TrainConfig(Config):
               momentum: float = None,
               weight_decay: float = None,
               #step_lr_sizes: List[int] = None,
-              epoch_lr_step: int = None,
+              epoch_lr_freq: int = None,
               step_lr_gamma: float = None,
               #warm_up_factor: float = None,
               #warm_up_num_iters: int = None,
@@ -67,8 +67,8 @@ class TrainConfig(Config):
             cls.WEIGHT_DECAY = weight_decay
         #if step_lr_sizes is not None:
         #    cls.STEP_LR_SIZES = ast.literal_eval(step_lr_sizes)
-        if epoch_lr_step is not None:
-           cls.EPOCH_LR_STEP = epoch_lr_step
+        if epoch_lr_freq is not None:
+           cls.EPOCH_LR_FREQ = epoch_lr_freq
         if step_lr_gamma is not None:
             cls.STEP_LR_GAMMA = step_lr_gamma
         #if warm_up_factor is not None:
