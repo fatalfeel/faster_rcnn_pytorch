@@ -40,10 +40,11 @@ parser.add_argument('--batch_size',                     type=int,               
 parser.add_argument('--learning_rate',                  type=float,                             help='default: {:g}'.format(Config.LEARNING_RATE))
 parser.add_argument('--momentum',                       type=float,                             help='default: {:g}'.format(Config.MOMENTUM))
 parser.add_argument('--weight_decay',                   type=float,                             help='default: {:g}'.format(Config.WEIGHT_DECAY))
-parser.add_argument('--step_lr_sizes',                  type=str,                               help='default: {!s}'.format(Config.STEP_LR_SIZES))
+#parser.add_argument('--step_lr_sizes',                  type=str,                               help='default: {!s}'.format(Config.STEP_LR_SIZES))
+parser.add_argument('--epoch_lr_step',                  type=str,                               help='default: {!s}'.format(Config.EPOCH_LR_STEP))
 parser.add_argument('--step_lr_gamma',                  type=float,                             help='default: {:g}'.format(Config.STEP_LR_GAMMA))
-parser.add_argument('--warm_up_factor',                 type=float,                             help='default: {:g}'.format(Config.WARM_UP_FACTOR))
-parser.add_argument('--warm_up_num_iters',              type=int,                               help='default: {:d}'.format(Config.WARM_UP_NUM_ITERS))
+#parser.add_argument('--warm_up_factor',                 type=float,                             help='default: {:g}'.format(Config.WARM_UP_FACTOR))
+#parser.add_argument('--warm_up_num_iters',              type=int,                               help='default: {:d}'.format(Config.WARM_UP_NUM_ITERS))
 parser.add_argument('--num_steps_to_display',           type=int,                               help='default: {:d}'.format(Config.NUM_STEPS_TO_DISPLAY))
 parser.add_argument('--num_save_epoch_freq',            type=int,                               help='default: {:d}'.format(Config.NUM_SAVE_EPOCH_FREQ))
 parser.add_argument('--num_epoch_to_finish',            type=int,                               help='default: {:d}'.format(Config.NUM_EPOCH_TO_FINISH))
@@ -94,7 +95,8 @@ def _train():
                              collate_fn = DatasetBase.padding_collate_fn,
                              **kwargs)
 
-    Log.i('Found {:d} samples'.format(len(dataset)))
+    sample_size = len(dataset)
+    Log.i('Found {:d} samples'.format(sample_size))
 
     backbone = BackboneBase.from_name(args.backbone)(pretrained=True)
 
@@ -120,6 +122,7 @@ def _train():
 
     optimizer = optim.SGD(model.parameters(), lr=Config.LEARNING_RATE, momentum=Config.MOMENTUM, weight_decay=Config.WEIGHT_DECAY)
     #scheduler = WarmUpMultiStepLR(optimizer, milestones=Config.STEP_LR_SIZES, gamma=Config.STEP_LR_GAMMA, factor=Config.WARM_UP_FACTOR, num_iters=Config.WARM_UP_NUM_ITERS)
+    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=int(sample_size/Config.EPOCH_LR_STEP), gamma=Config.STEP_LR_GAMMA)
 
     num_steps_to_display    = Config.NUM_STEPS_TO_DISPLAY
     num_save_epoch_freq     = Config.NUM_SAVE_EPOCH_FREQ
@@ -127,15 +130,15 @@ def _train():
 
     s_epoch         = 0
     step_accu       = 0
-    iter_end        = len(dataloader) * num_epoch_to_finish
+    iter_end        = sample_size * num_epoch_to_finish
     losses          = deque(maxlen=num_steps_to_display)
     time_checkpoint = time.time()
 
     if args.resume:
-        #s_epoch = model.load(args.checkpoint_dir, optimizer, scheduler)
-        s_epoch     = model.load(args.checkpoint_dir, optimizer)
-        step_accu   = len(dataloader)*s_epoch
-        pname       = args.checkpoint_dir + '/model-last.pth'
+        s_epoch     = model.load(args.checkpoint_dir, optimizer, scheduler)
+        #s_epoch     = model.load(args.checkpoint_dir, optimizer)
+        step_accu   = sample_size * s_epoch
+        pname       = args.checkpoint_dir + '/model-last.pt'
         Log.i(f'Model has been restored from file: {pname}')
 
     for epoch in range(s_epoch+1, num_epoch_to_finish+1):
@@ -148,7 +151,7 @@ def _train():
             iter_batch     += Config.BATCH_SIZE
             step_accu      += Config.BATCH_SIZE
 
-            '''
+            '''###test
             gt_img  = visdom_bbox(image_batch, bboxes_batch[0], labels_batch[0])
             pname   = '{}/train_gt{}.png'.format(args.checkpoint_dir, str(step_accu))
             save_MNIST(gt_img, pname)
@@ -169,7 +172,7 @@ def _train():
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-            #scheduler.step()
+            scheduler.step()
 
             losses.append(loss.item())
 
@@ -178,13 +181,14 @@ def _train():
                 time_checkpoint = time.time()
                 steps_per_sec   = num_steps_to_display / elapsed_time
                 samples_per_sec = Config.BATCH_SIZE * steps_per_sec
-                eta             = (iter_end - step_accu) / steps_per_sec / 3600
+                remain_hours    = (iter_end - step_accu) / steps_per_sec / 3600
+                lrate           = optimizer.param_groups[0]['lr']
                 avg_loss        = sum(losses) / len(losses)
-                Log.i(f'[Epoch/Iters-{epoch}/{iter_batch}] Avg. Loss = {avg_loss:.6f}, ({samples_per_sec:.2f} samples/sec; ETA {eta:.1f} hrs)')
+                Log.i(f'E/I:{epoch}/{iter_batch}, L.rate:{lrate:.6f}, Loss:{avg_loss:.6f}, {samples_per_sec:.2f} samples/sec, R.hours:{remain_hours:.1f}')
 
         if epoch % num_save_epoch_freq == 0:
-            #pname = model.save(args.checkpoint_dir, optimizer, scheduler, epoch)
-            pname = model.save(args.checkpoint_dir, optimizer, epoch=epoch)
+            pname = model.save(args.checkpoint_dir, optimizer, scheduler, epoch)
+            #pname = model.save(args.checkpoint_dir, optimizer, epoch=epoch)
             Log.i(f'Model has been saved to {pname}')
 
 if __name__ == '__main__':
@@ -206,10 +210,11 @@ if __name__ == '__main__':
                  learning_rate=args.learning_rate,
                  momentum=args.momentum,
                  weight_decay=args.weight_decay,
-                 step_lr_sizes=args.step_lr_sizes,
+                 #step_lr_sizes=args.step_lr_sizes,
+                 epoch_lr_step=args.epoch_lr_step,
                  step_lr_gamma=args.step_lr_gamma,
-                 warm_up_factor=args.warm_up_factor,
-                 warm_up_num_iters=args.warm_up_num_iters,
+                 #warm_up_factor=args.warm_up_factor,
+                 #warm_up_num_iters=args.warm_up_num_iters,
                  num_steps_to_display=args.num_steps_to_display,
                  num_save_epoch_freq=args.num_save_epoch_freq,
 				 num_epoch_to_finish=args.num_epoch_to_finish)

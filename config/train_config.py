@@ -7,17 +7,18 @@ class TrainConfig(Config):
     RPN_POST_NMS_TOP_N: int     = 2000  #smaller can do faster
     BATCH_SIZE: int             = 1
 
-    LEARNING_RATE: float        = 0.0001
+    LEARNING_RATE: float        = 0.001
     MOMENTUM: float             = 0.9
-    WEIGHT_DECAY: float         = 0.0005
-    STEP_LR_SIZES: List[int]    = [50000, 70000]
-    STEP_LR_GAMMA: float        = 0.1
-    WARM_UP_FACTOR: float       = 0.3333
-    WARM_UP_NUM_ITERS: int      = 500
+    WEIGHT_DECAY: float         = 0.0005 #avoid too fit
+    #STEP_LR_SIZES: List[int]    = [50000, 70000]
+    EPOCH_LR_STEP: [int]        = 10
+    STEP_LR_GAMMA: float        = 0.999
+    #WARM_UP_FACTOR: float       = 0.3333
+    #WARM_UP_NUM_ITERS: int      = 500
 
     NUM_STEPS_TO_DISPLAY: int   = 20
     NUM_SAVE_EPOCH_FREQ: int    = 5
-    NUM_EPOCH_TO_FINISH: int    = 100
+    NUM_EPOCH_TO_FINISH: int    = 50
 
     ANCHOR_SMOOTH_L1_LOSS_BETA: float   = 1.0
     PROPOSAL_SMOOTH_L1_LOSS_BETA: float = 1.0
@@ -37,10 +38,11 @@ class TrainConfig(Config):
               learning_rate: float = None,
               momentum: float = None,
               weight_decay: float = None,
-              step_lr_sizes: List[int] = None,
+              #step_lr_sizes: List[int] = None,
+              epoch_lr_step: int = None,
               step_lr_gamma: float = None,
-              warm_up_factor: float = None,
-              warm_up_num_iters: int = None,
+              #warm_up_factor: float = None,
+              #warm_up_num_iters: int = None,
               num_steps_to_display: int = None,
               num_save_epoch_freq: int = None,
               num_epoch_to_finish: int = None):
@@ -63,14 +65,16 @@ class TrainConfig(Config):
             cls.MOMENTUM = momentum
         if weight_decay is not None:
             cls.WEIGHT_DECAY = weight_decay
-        if step_lr_sizes is not None:
-            cls.STEP_LR_SIZES = ast.literal_eval(step_lr_sizes)
+        #if step_lr_sizes is not None:
+        #    cls.STEP_LR_SIZES = ast.literal_eval(step_lr_sizes)
+        if epoch_lr_step is not None:
+           cls.EPOCH_LR_STEP = epoch_lr_step
         if step_lr_gamma is not None:
             cls.STEP_LR_GAMMA = step_lr_gamma
-        if warm_up_factor is not None:
-            cls.WARM_UP_FACTOR = warm_up_factor
-        if warm_up_num_iters is not None:
-            cls.WARM_UP_NUM_ITERS = warm_up_num_iters
+        #if warm_up_factor is not None:
+        #    cls.WARM_UP_FACTOR = warm_up_factor
+        #if warm_up_num_iters is not None:
+        #    cls.WARM_UP_NUM_ITERS = warm_up_num_iters
         if num_steps_to_display is not None:
             cls.NUM_STEPS_TO_DISPLAY = num_steps_to_display
         if num_save_epoch_freq is not None:

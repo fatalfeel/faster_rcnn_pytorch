@@ -124,16 +124,16 @@ class Model(nn.Module):
                           'scheduler_state_dict':   scheduler.state_dict(),
                           'epoch':                  epoch}
 
-        pname       = os.path.join(checkpoint_dir, f'model-{epoch}.pth')
+        pname       = os.path.join(checkpoint_dir, f'model-{epoch}.pt')
         torch.save(checkpoint, pname)
 
-        lastname    = os.path.join(checkpoint_dir, 'model-last.pth')
+        lastname    = os.path.join(checkpoint_dir, 'model-last.pt')
         torch.save(checkpoint, lastname)
 
         return pname
 
     def load(self, checkpoint_dir: str, optimizer: Optimizer = None, scheduler: _LRScheduler = None) -> 'Model':
-        lastname    = os.path.join(checkpoint_dir, 'model-last.pth')
+        lastname    = os.path.join(checkpoint_dir, 'model-last.pt')
         checkpoint  = torch.load(lastname)
 
         self.load_state_dict(checkpoint['state_dict'])
