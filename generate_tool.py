@@ -100,7 +100,7 @@ class GenerateTool(object):
         # if nms_proposal_bboxes not enough to max len then add zeros
         for nms_proposal_bboxes in nms_proposal_bboxes_batch:
             '''padded_proposal_bboxes.append(torch.cat([nms_proposal_bboxes,
-                                             torch.zeros(max_nms_proposal_bboxes_length - len(nms_proposal_bboxes), 4).to(nms_proposal_bboxes)]))'''
+                                                        torch.zeros(max_nms_proposal_bboxes_length - len(nms_proposal_bboxes), 4).to(nms_proposal_bboxes)]))'''
             remain = max_nms_proposal_bboxes_length - len(nms_proposal_bboxes)
             padded_proposal_bboxes.append(torch.cat([nms_proposal_bboxes, torch.zeros(remain,4).to(nms_proposal_bboxes)]))
 
