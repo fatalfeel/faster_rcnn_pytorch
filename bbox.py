@@ -94,7 +94,6 @@ class BBox(object):
 
     @staticmethod
     def getIoUs(source: Tensor, gtboxes: Tensor) -> Tensor:
-        #torch.set_printoptions(profile="full")
         #source, gtboxes = source.unsqueeze(dim=-2).repeat(1, 1, gtboxes.shape[-2], 1), gtboxes.unsqueeze(dim=-3).repeat(1, source.shape[-2], 1, 1)
         source_ext      = source.unsqueeze(dim=-2).repeat(1, 1, gtboxes.shape[-2], 1)
         gtboxes_ext     = gtboxes.unsqueeze(dim=-3).repeat(1, source.shape[-2], 1, 1)
