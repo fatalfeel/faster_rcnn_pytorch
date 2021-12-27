@@ -163,4 +163,6 @@ class VOC2007(DatasetBase):
 
     @staticmethod
     def num_classes() -> int:
-        return 21
+        #return 21
+        num_cls = len(VOC2007.CATEGORY_TO_LABEL_DICT)
+        return num_cls
