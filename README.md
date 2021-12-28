@@ -20,7 +20,7 @@
 - Train 2.3 frames per second
 - Infer 5 frames per second
 
-## Pretrained 100 epochs download
+## Pretrained download
 - https://drive.google.com/file/d/1jQ6llxwUsWLv8ga4MClM0SbFLddJTFR8
 - Copy to ./checkpoint
 
