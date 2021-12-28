@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -v
 
 sudo pip3 install --force-reinstall opencv-python==3.4.10.35 tqdm websockets
 sudo pip3 install --force-reinstall gdown
