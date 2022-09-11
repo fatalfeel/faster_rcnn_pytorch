@@ -36,7 +36,7 @@ class Model(nn.Module):
         for it in hidden_layer.modules():
             if isinstance(it, nn.BatchNorm2d):
                 self._bn_modules.append(it)
-                
+
         # NOTE: It's crucial to freeze batch normalization modules for few batches training, which can be done by following processes
         #       (1) Change mode to `eval`
         #       (2) Disable gradient (we move this process into `forward`)
